@@ -2,6 +2,7 @@ using HashKorea.Data;
 using DotNetEnv;
 using HashKorea_Blazor.Components;
 using Microsoft.EntityFrameworkCore;
+using Radzen;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -11,6 +12,15 @@ Env.Load(envPath);
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
+
+// mudblazor
+builder.Services.AddMudServices();
+
+// radzen blazor
+builder.Services.AddScoped<DialogService>();
+builder.Services.AddScoped<NotificationService>();
+builder.Services.AddScoped<TooltipService>();
+builder.Services.AddScoped<ContextMenuService>();
 
 // DBContext
 builder.Services.AddDbContext<DataContext>(options =>
