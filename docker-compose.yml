@@ -1,0 +1,9 @@
+services:
+  hashkorea-blazor:
+    image: ${DOCKER_REGISTRY-}hashkoreablazor
+    build:
+      context: .
+      dockerfile: HashKorea-Blazor/Dockerfile
+    container_name: hashkorea-blazor
+    ports:
+      - "8080:8080"
