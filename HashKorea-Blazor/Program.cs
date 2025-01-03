@@ -1,4 +1,4 @@
-using CalyxManagement.Data;
+using HashKorea.Data;
 using DotNetEnv;
 using HashKorea_Blazor.Components;
 using Microsoft.EntityFrameworkCore;
@@ -19,18 +19,18 @@ builder.Services.AddDbContext<DataContext>(options =>
     // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
     // 2. MYSQL(MariaDB)
-    //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    //options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-
-    var connectionString = string.Format(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        Environment.GetEnvironmentVariable("AWS_SERVER"),
-        Environment.GetEnvironmentVariable("AWS_DATABASE"),
-        Environment.GetEnvironmentVariable("AWS_USER"),
-        Environment.GetEnvironmentVariable("AWS_PASSWORD")
-    );
-
+    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+
+    //var connectionString = string.Format(
+    //    builder.Configuration.GetConnectionString("DefaultConnection"),
+    //    Environment.GetEnvironmentVariable("AWS_SERVER"),
+    //    Environment.GetEnvironmentVariable("AWS_DATABASE"),
+    //    Environment.GetEnvironmentVariable("AWS_USER"),
+    //    Environment.GetEnvironmentVariable("AWS_PASSWORD")
+    //);
+
+    //options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
 // Add services to the container.
@@ -39,8 +39,9 @@ builder.Services.AddRazorComponents()
 
 var app = builder.Build();
 
-app.MapDefaultEndpoints();
+DatabaseManagementService.MigrationInitialisation(app);
 
+app.MapDefaultEndpoints();
 
 
 
