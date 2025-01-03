@@ -12,6 +12,27 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// DBContext
+builder.Services.AddDbContext<DataContext>(options =>
+{
+    // 1. MSSQL
+    // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
+
+    // 2. MYSQL(MariaDB)
+    //var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+    //options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+
+    var connectionString = string.Format(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        Environment.GetEnvironmentVariable("AWS_SERVER"),
+        Environment.GetEnvironmentVariable("AWS_DATABASE"),
+        Environment.GetEnvironmentVariable("AWS_USER"),
+        Environment.GetEnvironmentVariable("AWS_PASSWORD")
+    );
+
+    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
+});
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -21,26 +42,7 @@ var app = builder.Build();
 app.MapDefaultEndpoints();
 
 
-// DBContext
-builder.Services.AddDbContext<DataContext>(options =>
-{
-    // 1. MSSQL
-    // options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-    // 2. MYSQL(MariaDB)
-    var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
-    options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-
-    //var connectionString = string.Format(
-    //    builder.Configuration.GetConnectionString("DefaultConnection"),
-    //    Environment.GetEnvironmentVariable("AWS_SERVER"),
-    //    Environment.GetEnvironmentVariable("AWS_DATABASE"),
-    //    Environment.GetEnvironmentVariable("AWS_USER"),
-    //    Environment.GetEnvironmentVariable("AWS_PASSWORD")
-    //);
-
-    //options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
-});
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
