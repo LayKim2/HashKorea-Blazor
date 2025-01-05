@@ -1,0 +1,57 @@
+﻿@rendermode InteractiveServer
+
+<div class="login-dialog">
+
+    <RadzenText class="mb-4">
+        By continuing, you agree to our <RadzenLink Path="#">User Agreement</RadzenLink> and acknowledge that you understand the <RadzenLink Path="#">Privacy Policy</RadzenLink>.
+    </RadzenText>
+
+    <RadzenButton Click=@(() => {}) 
+                  Text="Continue With Phone Number"
+                  ButtonStyle="ButtonStyle.Light"
+                  Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc;" />
+
+    <RadzenButton Click=@(() => {}) 
+                  Text="Continue with Google"
+                  ButtonStyle="ButtonStyle.Light"
+                  Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc;" />
+
+    <RadzenButton Click=@(() => {}) 
+                  Text="Continue With Kakao"
+                  ButtonStyle="ButtonStyle.Secondary"
+                  Style="width: 100%; margin-bottom: 24px; background-color: #FEE500; color: #000; border: none;" />
+
+    <div class="text-center mb-4">
+        <RadzenText TextStyle="TextStyle.Body1">OR</RadzenText>
+    </div>
+
+    <RadzenTextBox Placeholder="Email or username"
+                   Style="width: 100%; margin-bottom: 12px;" />
+
+    <RadzenPassword Placeholder="Password"
+                    Style="width: 100%; margin-bottom: 8px;" />
+
+    <RadzenLink Path="#" Style="display: block; margin-bottom: 24px; color: #0D6EFD;">
+        Forgot password?
+    </RadzenLink>
+
+    <RadzenButton Click=@(() => {}) 
+                  Text="Log In"
+                  ButtonStyle="ButtonStyle.Primary"
+                  Style="width: 100%; margin-bottom: 16px;" />
+
+    <div class="text-center">
+        <RadzenText TextStyle="TextStyle.Body1">
+            New to Loplait? <RadzenLink Path="#" Style="color: #0D6EFD;">Sign Up</RadzenLink>
+        </RadzenText>
+    </div>
+</div>
+
+@code {
+    [CascadingParameter] public Radzen.DialogService DialogService { get; set; }
+
+    private void Cancel()
+    {
+        DialogService?.Close();
+    }
+}

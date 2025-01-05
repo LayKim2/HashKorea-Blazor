@@ -6,10 +6,10 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
-            <a href="https://learn.microsoft.com/aspnet/core/" target="_blank">Login</a>
+        <div class="top-row px-4 d-flex justify-content-end align-items-center">
+            <TopMenu />
         </div>
-
+        
         <article class="content px-4">
             @Body
         </article>
@@ -22,11 +22,11 @@
     <span class="dismiss">🗙</span>
 </div>
 
-<MudThemeProvider />
-<MudDialogProvider />
-<MudSnackbarProvider />
+<MudThemeProvider @rendermode="InteractiveServer" />
+<MudDialogProvider @rendermode="InteractiveServer" />
+<MudSnackbarProvider @rendermode="InteractiveServer" />
 
-<RadzenDialog />
-<RadzenNotification />
-<RadzenContextMenu />
-<RadzenTooltip />
+<RadzenDialog @rendermode="InteractiveServer" />
+<RadzenNotification @rendermode="InteractiveServer" />
+<RadzenContextMenu @rendermode="InteractiveServer" />
+<RadzenTooltip @rendermode="InteractiveServer" />

@@ -1,0 +1,30 @@
+﻿@using HashKorea_Blazor.Components.Pages.Shared
+@rendermode InteractiveServer
+
+@inject Radzen.DialogService RadzenDialogService
+
+    <RadzenButton Text="Login"
+                  Icon="login"
+                  ButtonStyle="ButtonStyle.Primary"
+                  Variant="Radzen.Variant.Outlined"
+                  Size="ButtonSize.Medium"
+                  Class="px-4 py-2"
+                  Click=@OpenLoginDialog />
+
+@code {
+
+    private async Task OpenLoginDialog()
+    {
+        await RadzenDialogService.OpenAsync<LoginPopup>("Login",
+            new Dictionary<string, object>(),
+            new Radzen.DialogOptions()
+                {
+                    Width = "500px",
+                    Height = "auto",
+                    CloseDialogOnEsc = true,
+                    CloseDialogOnOverlayClick = true,
+                    Style = "border-radius: 16px; padding: 24px; background: white;",
+                    ShowClose = true
+                });
+    }
+}

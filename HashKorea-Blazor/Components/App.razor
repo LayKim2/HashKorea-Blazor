@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
 
     <!-- radzen blazor-->
-    <!--<link rel="stylesheet" href="_content/Radzen.Blazor/css/default-base.css">-->
     <link rel="stylesheet" href="_content/Radzen.Blazor/css/material-base.css">
 
     <ImportMap />
@@ -24,11 +23,12 @@
     <script src="_content/MudBlazor/MudBlazor.min.js"></script>
 
     <!-- radzen blazor-->
-    <script src="_content/Radzen.Blazor/Radzen.Blazor.js"></script>
+    <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
+
 </head>
 
 <body>
-    <Routes />
+    <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
 </body>
 
