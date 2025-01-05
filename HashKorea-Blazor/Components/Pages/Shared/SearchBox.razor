@@ -1,0 +1,49 @@
+﻿@rendermode InteractiveServer
+
+<div class="search-container d-flex align-items-center flex-wrap gap-3 p-3 bg-white rounded-3 shadow-sm w-100">
+    <div class="dropdown search-item">
+        <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
+            <RadzenIcon Icon="calendar_today" />
+            <span>Period</span>
+        </button>
+        <ul class="dropdown-menu w-100">
+            <li><a class="dropdown-item" href="#">All</a></li>
+            <li><a class="dropdown-item" href="#">Today</a></li>
+            <li><a class="dropdown-item" href="#">This Week</a></li>
+            <li><a class="dropdown-item" href="#">This Month</a></li>
+        </ul>
+    </div>
+
+    <div class="dropdown flex-grow-1">
+        <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
+            <RadzenIcon Icon="location_on" />
+            <span>Location</span>
+        </button>
+        <ul class="dropdown-menu w-100">
+            <li><a class="dropdown-item" href="#">All</a></li>
+            <li><a class="dropdown-item" href="#">Seoul</a></li>
+            <li><a class="dropdown-item" href="#">Busan</a></li>
+        </ul>
+    </div>
+
+    <div class="dropdown flex-grow-1">
+        <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
+            <RadzenIcon Icon="category" />
+            <span>Category</span>
+        </button>
+        <ul class="dropdown-menu w-100">
+            <li><a class="dropdown-item" href="#">All</a></li>
+            <li><a class="dropdown-item" href="#">Category 1</a></li>
+            <li><a class="dropdown-item" href="#">Category 2</a></li>
+        </ul>
+    </div>
+
+    <div class="search-input-wrapper">
+        <input type="text" class="form-control search-input" placeholder="Enter search keywords..." />
+    </div>
+
+    <button class="btn btn-primary d-flex align-items-center gap-2 search-button">
+        <RadzenIcon Icon="search" />
+        <span>Search</span>
+    </button>
+</div>
