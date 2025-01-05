@@ -3,6 +3,10 @@ using DotNetEnv;
 using HashKorea_Blazor.Components;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using HashKorea.Services;
+using System.Security.Claims;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -13,8 +17,26 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+// when you use http request with other api in Service
+//builder.Services.AddHttpContextAccessor();
+
+// when you use like MVC pattern (controller)
+//builder.Services.AddControllersWithViews();
+
+builder.Services.AddScoped<ILogService, LogService>();
+
 // mudblazor
 builder.Services.AddMudServices();
+
+// set session
+// 1. auth login for kakao -> set session for auth
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 // radzen blazor
 //builder.Services.AddRadzenComponents();
@@ -48,7 +70,25 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddKakaoTalk(options =>
+{
+    options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
+    options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
+
+    var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
+    var uri = new Uri(redirectUri);
+    options.CallbackPath = new PathString(uri.AbsolutePath);
+});
+
+
 var app = builder.Build();
+
+app.UseSession();
 
 DatabaseManagementService.MigrationInitialisation(app);
 
@@ -66,11 +106,64 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
+app.UseAuthentication();
+app.UseAuthorization();
+
+app.MapGet("/signin-kakao", async context =>
+{
+    var state = Guid.NewGuid().ToString();
+    context.Session.SetString("AuthState", state);
+
+    var properties = new AuthenticationProperties
+    {
+        RedirectUri = "/signin-kakao-callback",
+        Items =
+        {
+            { "state", state }
+        }
+    };
+
+    await context.ChallengeAsync("KakaoTalk", properties);
+});
+
+app.MapGet("/signin-kakao-callback", async context =>
+{
+    var result = await context.AuthenticateAsync("KakaoTalk");
+
+    if (result?.Succeeded != true)
+    {
+        context.Response.Redirect("/");
+        return;
+    }
+
+    if (result.Properties.Items["state"] != context.Session.GetString("AuthState"))
+    {
+        context.Response.Redirect("/");
+        return;
+    }
+
+    var userId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var userName = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+
+    context.Response.Redirect("/");
+});
+
+app.MapGet("/signout", async context =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    context.Response.Redirect("/");
+});
 
 app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// when you use controller (for access to api url )
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller=Home}/{action=Index}/{id?}")
+//    .WithStaticAssets();
 
 app.Run();

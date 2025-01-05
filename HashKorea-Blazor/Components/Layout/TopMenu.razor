@@ -1,8 +1,22 @@
 ﻿@using HashKorea_Blazor.Components.Pages.Shared
 @rendermode InteractiveServer
 
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject NavigationManager NavigationManager
+
 @inject Radzen.DialogService RadzenDialogService
 
+@if (User.Identity?.IsAuthenticated == true) {
+    <RadzenButton Text="logout"
+                  Icon="logout"
+                  ButtonStyle="ButtonStyle.Primary"
+                  Variant="Radzen.Variant.Outlined"
+                  Size="ButtonSize.Medium"
+                  Class="px-4 py-2"
+                  Click=@KakaoLogout />
+} else {
     <RadzenButton Text="Login"
                   Icon="login"
                   ButtonStyle="ButtonStyle.Primary"
@@ -10,8 +24,17 @@
                   Size="ButtonSize.Medium"
                   Class="px-4 py-2"
                   Click=@OpenLoginDialog />
-
+}
+    
 @code {
+
+    private ClaimsPrincipal? User { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.User;
+    }
 
     private async Task OpenLoginDialog()
     {
@@ -26,5 +49,11 @@
                     Style = "border-radius: 16px; padding: 24px; background: white;",
                     ShowClose = true
                 });
+    }
+
+    private void KakaoLogout()
+    {
+        // redirect
+        NavigationManager.NavigateTo("/signout", forceLoad: true);
     }
 }

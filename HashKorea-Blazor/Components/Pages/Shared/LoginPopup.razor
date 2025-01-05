@@ -1,5 +1,7 @@
 ﻿@rendermode InteractiveServer
 
+@inject NavigationManager NavigationManager
+
 <div class="login-dialog">
 
     <RadzenText class="mb-4">
@@ -16,7 +18,7 @@
                   ButtonStyle="ButtonStyle.Light"
                   Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc;" />
 
-    <RadzenButton Click=@(() => {}) 
+    <RadzenButton Click="@KakaoLogin"
                   Text="Continue With Kakao"
                   ButtonStyle="ButtonStyle.Secondary"
                   Style="width: 100%; margin-bottom: 24px; background-color: #FEE500; color: #000; border: none;" />
@@ -48,10 +50,11 @@
 </div>
 
 @code {
-    [CascadingParameter] public Radzen.DialogService DialogService { get; set; }
 
-    private void Cancel()
+    private void KakaoLogin()
     {
-        DialogService?.Close();
+        // forceLoad: redirect
+        NavigationManager.NavigateTo("/signin-kakao", forceLoad: true);
     }
+
 }
