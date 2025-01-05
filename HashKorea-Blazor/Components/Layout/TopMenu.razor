@@ -9,6 +9,7 @@
 @inject Radzen.DialogService RadzenDialogService
 
 @if (User.Identity?.IsAuthenticated == true) {
+    <MudAvatar Color="Color.Primary" Style="margin-right: 10px;">@GetUserInitial()</MudAvatar>
     <RadzenButton Text="logout"
                   Icon="logout"
                   ButtonStyle="ButtonStyle.Primary"
@@ -36,6 +37,12 @@
         User = authState.User;
     }
 
+    private string GetUserInitial()
+    {
+        var name = User?.FindFirst(ClaimTypes.Name)?.Value;
+        return !string.IsNullOrEmpty(name) ? name[0].ToString().ToUpper() : "?";
+    }
+
     private async Task OpenLoginDialog()
     {
         await RadzenDialogService.OpenAsync<LoginPopup>("Login",
@@ -50,6 +57,8 @@
                     ShowClose = true
                 });
     }
+
+
 
     private void KakaoLogout()
     {

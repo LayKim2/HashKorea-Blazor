@@ -142,9 +142,6 @@ app.MapGet("/signin-kakao-callback", async context =>
         return;
     }
 
-    var userId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var userName = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
-
     context.Response.Redirect("/");
 });
 
