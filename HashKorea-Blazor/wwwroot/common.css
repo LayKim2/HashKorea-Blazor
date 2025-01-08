@@ -1,7 +1,11 @@
 
 /* list component - start */
 
-.list-container {
+.list-container-grid > div[style*="height: 0"] {
+    display: none !important;
+}
+
+.list-container-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
     gap: 20px;
@@ -11,6 +15,7 @@
 .list-card {
     padding: 0 !important;
     overflow: hidden;
+    cursor: pointer;
 }
 
 .image-container {

@@ -3,6 +3,7 @@
 
 @inject IJSRuntime JSRuntime
 @inject ISharedService SharedService
+@inject NavigationManager NavigationManager
 
 @rendermode InteractiveServer
 
@@ -13,15 +14,15 @@
         <RadzenText TextStyle="TextStyle.Subtitle1">loading...</RadzenText>
     </RadzenStack>
 } else {
-    <div class="list-container">
+    <div class="list-container-grid">
         <Virtualize Items="model" Context="item" ItemSize="300" OverscanCount="5">
-            <RadzenCard class="list-card" data-id="@item.Id">
+            <RadzenCard class="list-card" data-id="@item.Id" @onclick="@(() => PostDetail(item.Id))">
                 <div class="image-container">
                     <RadzenImage Path="@(string.IsNullOrEmpty(item.MainImageUrl) ? "/main-icon.png" : item.MainImageUrl)" class="list-image lazy-image" loading="lazy" />
                 </div>
                 <div class="card-content">
                     <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
-                    <RadzenText TextStyle="TextStyle.Subtitle2" class="mt-2">@item.Title</RadzenText>
+                    <RadzenText TextStyle="TextStyle.H6" class="mt-2">@item.Title</RadzenText>
                 </div>
             </RadzenCard>
         </Virtualize>
@@ -73,6 +74,12 @@
         }
 
         isLoading = false;
+    }
+
+    private void PostDetail(int postId)
+    {
+        var currentUrl = NavigationManager.Uri;
+        NavigationManager.NavigateTo($"/detail/{postId}?returnUrl={Uri.EscapeDataString(currentUrl)}");
     }
 
 }

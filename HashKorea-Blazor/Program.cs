@@ -18,7 +18,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddServiceDefaults();
 
 // when you use http request with other api in Service
-//builder.Services.AddHttpContextAccessor();
+builder.Services.AddHttpContextAccessor();
 
 // when you use like MVC pattern (controller)
 //builder.Services.AddControllersWithViews();

@@ -1,0 +1,131 @@
+﻿@page "/detail/{PostId:int}"
+@using HashKorea.DTOs.Shared
+@using System.Text.RegularExpressions
+@using System.Web
+@inject ISharedService SharedService
+
+@rendermode InteractiveServer
+
+@if (isLoading)
+{
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="Radzen.AlignItems.Center" JustifyContent="JustifyContent.Center" Class="rz-m-12" Gap="2rem">
+        <RadzenProgressBarCircular Value="100" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <RadzenText TextStyle="TextStyle.Subtitle1">loading...</RadzenText>
+    </RadzenStack>
+}
+else if (post != null)
+{
+    <MudContainer MaxWidth="MaxWidth.Medium" Class="pa-2 pa-sm-8">
+        <MudPaper Elevation="0" Class="pa-2 pa-sm-6">
+            <MudStack Spacing="4">
+                <MudStack Spacing="2">
+                    <MudText Typo="Typo.h4" Class="fw-bold">@post.Title</MudText>
+                    <MudDivider Class="my-2" />
+                    <MudStack Row="true" Spacing="2" AlignItems="MudBlazor.AlignItems.Center">
+                        <MudAvatar Color="Color.Primary">@post.UserName[0]</MudAvatar>
+                        <MudStack Spacing="0">
+                            <MudText Typo="Typo.body1">@post.UserName</MudText>
+                            <MudText Typo="Typo.caption" Color="Color.Secondary">
+                                @post.RelativeTime · @post.UserCountry
+                            </MudText>
+                        </MudStack>
+                        @if (post.IsOwner)
+                        {
+                            <MudSpacer />
+                            <MudButtonGroup Size="Size.Small" Variant="MudBlazor.Variant.Outlined">
+                                <MudButton StartIcon="@Icons.Material.Filled.Edit">Edit</MudButton>
+                                <MudButton StartIcon="@Icons.Material.Filled.Delete" Color="Color.Error">Delete</MudButton>
+                            </MudButtonGroup>
+                        }
+                    </MudStack>
+                </MudStack>
+
+                <MudDivider />
+
+                <MudText Typo="Typo.body1" Class="py-4">
+                    @((MarkupString)post.Content)
+                </MudText>
+
+                <MudDivider />
+
+                <MudStack Row="true" Justify="Justify.SpaceBetween">
+                    <MudButton Variant="MudBlazor.Variant.Text" StartIcon="@Icons.Material.Filled.ArrowBack"
+                    OnClick="NavigateBack"
+                    Disabled="@string.IsNullOrEmpty(ReturnUrl)">
+                        Back to List
+                    </MudButton>
+                    <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary"
+                    StartIcon="@Icons.Material.Filled.Share">
+                        Share
+                    </MudButton>
+                </MudStack>
+            </MudStack>
+        </MudPaper>
+    </MudContainer>
+}
+
+
+
+@code {
+    [Parameter]
+    public int PostId { get; set; }
+
+    [Parameter]
+    public string ReturnUrl { get; set; } = string.Empty;
+
+    private bool isLoading = true;
+    private GetPostDetailResponsetDto? post;
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; } = default!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var query = HttpUtility.ParseQueryString(uri.Query);
+        ReturnUrl = query.Get("returnUrl") ?? string.Empty;
+
+        await LoadData();
+
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            isLoading = true;
+            var response = await SharedService.GetPostDetail(PostId);
+            if (response.Success)
+            {
+                post = response.Data;
+            }
+        }
+        catch (Exception ex)
+        {
+            // 오류 처리
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void NavigateBack()
+    {
+        NavigationManager.NavigateTo(ReturnUrl);
+    }
+
+}
+
+
+
+<style>
+    img {
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        object-fit: cover;
+        border-radius: 8px;
+        margin: 1rem 0;
+    }
+</style>
