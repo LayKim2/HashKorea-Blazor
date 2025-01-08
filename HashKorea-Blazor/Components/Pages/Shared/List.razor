@@ -1,6 +1,7 @@
 ﻿@using HashKorea.DTOs.Shared
 @using MudBlazor
 
+@inject IJSRuntime JSRuntime
 @inject ISharedService SharedService
 
 @rendermode InteractiveServer
@@ -16,7 +17,7 @@
         <Virtualize Items="model" Context="item" ItemSize="300" OverscanCount="5">
             <RadzenCard class="list-card" data-id="@item.Id">
                 <div class="image-container">
-                    <RadzenImage Path="@item.MainImageUrl" class="list-image" loading="lazy" />
+                    <RadzenImage Path="@(string.IsNullOrEmpty(item.MainImageUrl) ? "/main-icon.png" : item.MainImageUrl)" class="list-image lazy-image" loading="lazy" />
                 </div>
                 <div class="card-content">
                     <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
@@ -46,6 +47,14 @@
     protected override async Task OnInitializedAsync()
     {
         await LoadData();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initLazyLoading");
+        }
     }
 
     private async Task LoadData()
