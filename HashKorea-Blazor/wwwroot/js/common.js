@@ -1,4 +1,6 @@
-﻿window.initLazyLoading = function () {
+﻿// 1. image lazy loading
+
+window.initLazyLoading = function () {
     const observer = new IntersectionObserver((entries, observer) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {

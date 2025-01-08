@@ -6,7 +6,9 @@ using Radzen;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication;
 using HashKorea.Services;
+using HashKorea.DTOs.Auth;
 using System.Security.Claims;
+using HashKorea.Common.Constants;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -25,6 +27,7 @@ builder.Services.AddHttpContextAccessor();
 
 builder.Services.AddScoped<ISharedService, SharedService>();
 builder.Services.AddScoped<ILogService, LogService>();
+builder.Services.AddScoped<IAuthService, AuthService>();
 
 // mudblazor
 builder.Services.AddMudServices();
@@ -131,16 +134,52 @@ app.MapGet("/signin-kakao-callback", async context =>
 {
     var result = await context.AuthenticateAsync("KakaoTalk");
 
-    if (result?.Succeeded != true)
+    if (result?.Succeeded != true ||
+        result.Properties.Items["state"] != context.Session.GetString("AuthState"))
     {
         context.Response.Redirect("/");
         return;
     }
 
-    if (result.Properties.Items["state"] != context.Session.GetString("AuthState"))
+    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+
+    if (string.IsNullOrEmpty(kakaoId))
     {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         context.Response.Redirect("/");
         return;
+    }
+
+    using var scope = app.Services.CreateScope();
+    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+
+    var model = new IsCompletedRequestDto
+    {
+        Id = kakaoId,
+        SignInType = USER_AUTH.KAKAO,
+        Name = name ?? string.Empty,
+        Email = email ?? string.Empty
+    };
+
+    var isCompletedResponse = await authService.IsCompleted(model);
+    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
+            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+    }
+    else
+    {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     }
 
     context.Response.Redirect("/");
@@ -149,6 +188,7 @@ app.MapGet("/signin-kakao-callback", async context =>
 app.MapGet("/signout", async context =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    context.Session.Clear();
     context.Response.Redirect("/");
 });
 
