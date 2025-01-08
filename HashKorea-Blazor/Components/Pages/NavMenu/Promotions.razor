@@ -1,4 +1,15 @@
-﻿@page "/promotions"
+﻿@attribute [StreamRendering]
 
+@page "/promotions"
+
+@rendermode InteractiveServer
 
 <HashKorea_Blazor.Components.Pages.Shared.SearchBox/>
+
+@* TO DO: Radzen - Pager *@
+@* TO DO: Radzen - Panel *@
+
+@* <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" />
+<MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Edit" /> *@
+
+<HashKorea_Blazor.Components.Pages.Shared.List></HashKorea_Blazor.Components.Pages.Shared.List>

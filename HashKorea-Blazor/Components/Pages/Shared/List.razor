@@ -1,0 +1,69 @@
+﻿@using HashKorea.DTOs.Shared
+@using MudBlazor
+
+@inject ISharedService SharedService
+
+@rendermode InteractiveServer
+
+@if (isLoading)
+{
+    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="Radzen.AlignItems.Center" JustifyContent="JustifyContent.Center" Class="rz-m-12" Gap="2rem">
+        <RadzenProgressBarCircular Value="100" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
+        <RadzenText TextStyle="TextStyle.Subtitle1">loading...</RadzenText>
+    </RadzenStack>
+} else {
+    <div class="list-container">
+        <Virtualize Items="model" Context="item" ItemSize="300" OverscanCount="5">
+            <RadzenCard class="list-card" data-id="@item.Id">
+                <div class="image-container">
+                    <RadzenImage Path="@item.MainImageUrl" class="list-image" loading="lazy" />
+                </div>
+                <div class="card-content">
+                    <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
+                    <RadzenText TextStyle="TextStyle.Subtitle2" class="mt-2">@item.Title</RadzenText>
+                </div>
+            </RadzenCard>
+        </Virtualize>
+    </div>
+
+    @* <div class="promotion-container">
+        @foreach (var item in promotions)
+        {
+            <RadzenCard class="promotion-card">
+                <RadzenImage Path="@item.ImageUrl" class="promotion-image" />
+                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@item.Category" class="@item.CategoryClass" />
+                <RadzenText TextStyle="TextStyle.Subtitle2" class="mt-2">@item.Title</RadzenText>
+            </RadzenCard>
+        }
+    </div> *@
+}
+
+
+@code {
+    private bool isLoading = true;
+    private List<GetPostsResponseDto>? model;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadData();
+    }
+
+    private async Task LoadData()
+    {
+        isLoading = true;
+
+        var response = await SharedService.GetPosts("promotion");
+        if (response.Success)
+        {
+            model = response.Data;
+            StateHasChanged();
+        }
+        else
+        {
+            // 오류 처리
+        }
+
+        isLoading = false;
+    }
+
+}

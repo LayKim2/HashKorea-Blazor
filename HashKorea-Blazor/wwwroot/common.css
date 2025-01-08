@@ -1,0 +1,31 @@
+
+/* list component - start */
+
+.list-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+    padding: 16px;
+}
+
+.list-card {
+    padding: 0 !important;
+    overflow: hidden;
+}
+
+.image-container {
+    margin: -1px -1px 0 -1px;
+}
+
+.list-image {
+    width: 100%;
+    aspect-ratio: 4/3;
+    object-fit: cover;
+    display: block;
+}
+
+.card-content {
+    padding: 16px;
+}
+
+/* list component - end */

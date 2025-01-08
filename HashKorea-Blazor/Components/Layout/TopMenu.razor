@@ -8,6 +8,8 @@
 
 @inject Radzen.DialogService RadzenDialogService
 
+@* TO DO: ProfileMenu for list of setting for user *@
+
 @if (User.Identity?.IsAuthenticated == true) {
     <MudAvatar Color="Color.Primary" Style="margin-right: 10px;">@GetUserInitial()</MudAvatar>
     <RadzenButton Text="logout"

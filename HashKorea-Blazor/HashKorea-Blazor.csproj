@@ -38,10 +38,6 @@
     <ProjectReference Include="..\HashKorea-Blazor.ServiceDefaults\HashKorea-Blazor.ServiceDefaults.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="DTOs\" />
-  </ItemGroup>
-
   <!-- MudBlazor -->
   <ItemGroup>
     <Using Include="MudBlazor.Services" />
