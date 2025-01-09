@@ -1,9 +1,12 @@
 ﻿@using HashKorea.DTOs.Shared
+@using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
+@using System.Security.Claims
 
 @inject IJSRuntime JSRuntime
 @inject ISharedService SharedService
 @inject NavigationManager NavigationManager
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
 @rendermode InteractiveServer
 
@@ -14,6 +17,20 @@
         <RadzenText TextStyle="TextStyle.Subtitle1">loading...</RadzenText>
     </RadzenStack>
 } else {
+
+    @if (User.Identity?.IsAuthenticated == true) {
+
+    }
+
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4">
+        <RadzenText TextStyle="TextStyle.H6">Total Results: @model.Count</RadzenText>
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <RadzenButton Icon="add" Text="Post" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavigateToAddPost())" />
+        }
+    </RadzenStack>
+
+
     <div class="list-container-grid">
         <Virtualize Items="model" Context="item" ItemSize="300" OverscanCount="5">
             <RadzenCard class="list-card" data-id="@item.Id" @onclick="@(() => PostDetail(item.Id))">
@@ -27,17 +44,6 @@
             </RadzenCard>
         </Virtualize>
     </div>
-
-    @* <div class="promotion-container">
-        @foreach (var item in promotions)
-        {
-            <RadzenCard class="promotion-card">
-                <RadzenImage Path="@item.ImageUrl" class="promotion-image" />
-                <RadzenBadge BadgeStyle="BadgeStyle.Light" Text="@item.Category" class="@item.CategoryClass" />
-                <RadzenText TextStyle="TextStyle.Subtitle2" class="mt-2">@item.Title</RadzenText>
-            </RadzenCard>
-        }
-    </div> *@
 }
 
 
@@ -45,8 +51,13 @@
     private bool isLoading = true;
     private List<GetPostsResponseDto>? model;
 
+    private ClaimsPrincipal? User { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.User;
+
         await LoadData();
     }
 
@@ -79,7 +90,12 @@
     private void PostDetail(int postId)
     {
         var currentUrl = NavigationManager.Uri;
-        NavigationManager.NavigateTo($"/detail/{postId}?returnUrl={Uri.EscapeDataString(currentUrl)}");
+        NavigationManager.NavigateTo($"/post/detail/{postId}?returnUrl={Uri.EscapeDataString(currentUrl)}");
+    }
+
+    private void NavigateToAddPost()
+    {
+        NavigationManager.NavigateTo("/post/add");
     }
 
 }

@@ -26,10 +26,18 @@
     <!-- radzen blazor-->
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
 
+    @* Tizzani.MudBlazor.HtmlEditor *@
+    <link href="_content/Tizzani.MudBlazor.HtmlEditor/MudHtmlEditor.css" rel="stylesheet" />
+
     <script src="/js/common.js"></script>
 </head>
 
 <body>
+
+    @* Tizzani.MudBlazor.HtmlEditor *@
+    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
+    <script src="_content/Tizzani.MudBlazor.HtmlEditor/quill-blot-formatter.min.js"></script>
+
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>
 </body>
