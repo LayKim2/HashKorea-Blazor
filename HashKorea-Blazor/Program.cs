@@ -28,6 +28,7 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ISharedService, SharedService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
+builder.Services.AddScoped<IFileService, FileService>();
 
 // mudblazor
 builder.Services.AddMudServices();

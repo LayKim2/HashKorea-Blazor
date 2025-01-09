@@ -51,7 +51,7 @@ public class AuthService : IAuthService
 
                 response.Data = new IsCompletedResponseDto()
                 {
-                    id = model.Id.ToString(),
+                    id = newUser.Id.ToString(),
                     name= model.Name,
                     loginType = model.SignInType,
                     isCompleted = true
@@ -62,7 +62,7 @@ public class AuthService : IAuthService
             {
                 response.Data = new IsCompletedResponseDto()
                 {
-                    id = model.Id.ToString(),
+                    id = userAuth.UserId.ToString(),
                     name= model.Name,
                     loginType = model.SignInType,
                     isCompleted = userAuth.IsCompleted
