@@ -1,6 +1,7 @@
 ﻿@attribute [StreamRendering]
 
 @page "/promotions"
+@using HashKorea.Common.Constants
 
 @rendermode InteractiveServer
 
@@ -12,4 +13,4 @@
 @* <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" />
 <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Edit" /> *@
 
-<HashKorea_Blazor.Components.Pages.Shared.Posts></HashKorea_Blazor.Components.Pages.Shared.Posts>
+<HashKorea_Blazor.Components.Pages.Shared.Posts Type="@(POST_TYPE.PROMOTION)"></HashKorea_Blazor.Components.Pages.Shared.Posts>

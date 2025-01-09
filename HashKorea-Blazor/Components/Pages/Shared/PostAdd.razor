@@ -3,145 +3,122 @@
 @page "/post/add"
 @page "/post/edit/{PostId:int}"
 
+@using HashKorea.Common.Constants
+@using HashKorea.DTOs.Shared
 @using Microsoft.AspNetCore.Authorization
+@using Microsoft.AspNetCore.WebUtilities
 @using Tizzani.MudBlazor.HtmlEditor
 
+@inject ISharedService SharedService
+@inject NavigationManager NavigationManager
 
 @rendermode InteractiveServer
 
 <MudPaper Elevation="3" Class="pa-4" Style="height: 100vh; display: flex; flex-direction: column;">
     <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
-        <div class="d-flex gap-3">
-            <RadzenDropDown TValue="string"
-                            Data=@(new[] { "All", "Today", "This Week", "This Month" })
-                            Placeholder="Period"
-                            Style="width: 100%; --rz-input-start-icon: 'calendar_today';" />
-
-            <RadzenDropDown TValue="string"
-                            Data=@(new[] { "All", "Seoul", "Busan" })
-                            Placeholder="Location"
-                            Style="width: 100%;" />
-
-            <RadzenDropDown TValue="string"
-                            Data=@(new[] { "All", "Category 1", "Category 2" })
-                            Placeholder="Category"
-                            Style="width: 100%;" />
-        </div>
-
-        <RadzenTextBox Placeholder="Title" Class="w-100 mb-1" />
-
-        <MudHtmlEditor Style="flex: 1;">
-            <MudHtmlToolbarOptions InsertImage="true" />
-        </MudHtmlEditor>
-    </MudContainer>
-</MudPaper>
-
-
-@* <MudPaper Elevation="3" Class="pa-4" Style="height: 100vh; display: flex; flex-direction: column;">
-    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
         <MudGrid Spacing="2" Class="mb-1">
             <MudItem xs="12" md="4">
-                <MudSelect T="string"
-                           Label="Period"
-                           Variant="MudBlazor.Variant.Outlined"
-                           AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                           Dense="true">
-                    <MudSelectItem Value="@("all")">All</MudSelectItem>
+                <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable>
+                    <MudSelectItem Value="@("all")" />
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudSelect T="string" Label="Location" Variant="MudBlazor.Variant.Outlined" Dense="true" FullWidth="true">
-                    <MudSelectItem Value="@("all")">All</MudSelectItem>
-                    <MudSelectItem Value="@("seoul")">Seoul</MudSelectItem>
-                    <MudSelectItem Value="@("busan")">Busan</MudSelectItem>
+                <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
+                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable>
+                    <MudSelectItem Value="@("all")" />
                 </MudSelect>
             </MudItem>
             <MudItem xs="12" md="4">
-                <MudSelect T="string" Label="Category" Variant="MudBlazor.Variant.Outlined" Dense="true" FullWidth="true">
-                    <MudSelectItem Value="@("all")">All</MudSelectItem>
-                    <MudSelectItem Value="@("category1")">Category 1</MudSelectItem>
-                    <MudSelectItem Value="@("category2")">Category 2</MudSelectItem>
+                <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
+                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                           @bind-Value="selectedCategoryCode">
+                    @foreach (var category in categories)
+                    {
+                        <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
+                    }
                 </MudSelect>
             </MudItem>
         </MudGrid>
 
-        <MudTextField T="string" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-1" />
+        <MudTextField @bind-Value="postTitle" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-1" />
 
-        <MudHtmlEditor Style="flex: 1;">
+        <MudHtmlEditor @ref="htmlEditor">
             <MudHtmlToolbarOptions InsertImage="true" />
         </MudHtmlEditor>
+
+        <MudItem Class="d-flex justify-end mt-4">
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" OnClick="SavePost">Save</MudButton>
+        </MudItem>
     </MudContainer>
-</MudPaper> *@
-
-
-@* <MudLayout Style="height: 100vh; display: flex; flex-direction: column;">
-    <MudMainContent Style="flex: 1; display: flex; flex-direction: column;">
-        <MudContainer Style="flex: 0; padding: 16px;">
-            <div class="search-container d-flex align-items-center flex-wrap gap-3 p-3 bg-white rounded-3 shadow-sm w-100">
-                <div class="dropdown flex-grow-1" style="flex-basis: 0;">
-                    <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
-                        <RadzenIcon Icon="calendar_today" />
-                        <span>Period</span>
-                    </button>
-                    <ul class="dropdown-menu w-100">
-                        <li><a class="dropdown-item" href="#">All</a></li>
-                        <li><a class="dropdown-item" href="#">Today</a></li>
-                        <li><a class="dropdown-item" href="#">This Week</a></li>
-                        <li><a class="dropdown-item" href="#">This Month</a></li>
-                    </ul>
-                </div>
-
-                <div class="dropdown flex-grow-1" style="flex-basis: 0;">
-                    <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
-                        <RadzenIcon Icon="location_on" />
-                        <span>Location</span>
-                    </button>
-                    <ul class="dropdown-menu w-100">
-                        <li><a class="dropdown-item" href="#">All</a></li>
-                        <li><a class="dropdown-item" href="#">Seoul</a></li>
-                        <li><a class="dropdown-item" href="#">Busan</a></li>
-                    </ul>
-                </div>
-
-                <div class="dropdown flex-grow-1" style="flex-basis: 0;">
-                    <button class="btn btn-outline-light text-dark border dropdown-toggle d-flex align-items-center gap-2 px-3 w-100" type="button" data-bs-toggle="dropdown">
-                        <RadzenIcon Icon="category" />
-                        <span>Category</span>
-                    </button>
-                    <ul class="dropdown-menu w-100">
-                        <li><a class="dropdown-item" href="#">All</a></li>
-                        <li><a class="dropdown-item" href="#">Category 1</a></li>
-                        <li><a class="dropdown-item" href="#">Category 2</a></li>
-                    </ul>
-                </div>
-            </div>
-
-            <MudTextField T="string" Label="Title" Variant="MudBlazor.Variant.Outlined" FullWidth="true" Class="mt-3" />
-        </MudContainer>
-
-        <MudContainer Style="flex: 1; display: flex; flex-direction: column;">
-            <MudHtmlEditor Style="flex: 1;">
-                <MudHtmlToolbarOptions InsertImage="true" />
-            </MudHtmlEditor>
-        </MudContainer>
-    </MudMainContent>
-</MudLayout> *@
-
-
+</MudPaper>
 
 @code {
-    [Parameter]
-    public int? PostId { get; set; }
+    [Parameter] public int? PostId { get; set; }
 
-    protected override void OnInitialized()
+    private string postType = string.Empty;
+
+    private string postTitle = string.Empty;
+
+    private MudHtmlEditor htmlEditor;
+
+    private List<GetCommonCodeResponseDto> categories = new();
+
+    private string selectedCategoryCode;
+
+    protected override async Task OnInitializedAsync()
     {
+        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var type))
+        {
+            postType = type;
+            await LoadCategories();
+        }
+
         if (PostId.HasValue)
         {
-            // edit
+            await LoadExistingPost();
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        var response = await SharedService.GetCommonCodes(postType);
+        if (response.Success)
+        {
+            categories = response.Data;
+        }
+    }
+
+    private async Task LoadExistingPost()
+    {
+        // Implement logic to load existing post data
+    }
+
+    private async Task SavePost()
+    {
+        var content = await htmlEditor.GetHtml();
+        var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCategoryCode);
+
+        var requestModel = new PostRequestDto
+            {
+                PostId = PostId,
+                Type = postType,
+                Category = selectedCategory?.Name ?? string.Empty,
+                CategoryCD = selectedCategoryCode,
+                Title = postTitle,
+                Content = content,
+            };
+
+        var response = await SharedService.AddPost(requestModel);
+        if (response.Success)
+        {
+            NavigationManager.NavigateTo("/posts");
         }
         else
         {
-            // add
+            // Handle error
         }
     }
+    
 }

@@ -18,10 +18,6 @@
     </RadzenStack>
 } else {
 
-    @if (User.Identity?.IsAuthenticated == true) {
-
-    }
-
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4">
         <RadzenText TextStyle="TextStyle.H6">Total Results: @model.Count</RadzenText>
         @if (User.Identity?.IsAuthenticated == true)
@@ -52,6 +48,9 @@
     private List<GetPostsResponseDto>? model;
 
     private ClaimsPrincipal? User { get; set; }
+
+    [Parameter]
+    public string Type { get; set; } = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -95,7 +94,7 @@
 
     private void NavigateToAddPost()
     {
-        NavigationManager.NavigateTo("/post/add");
+        NavigationManager.NavigateTo("/post/add?type=" + Type);
     }
 
 }
