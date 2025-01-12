@@ -46,12 +46,15 @@
         overflow-y: auto;
     }
 
-    .pc-menu {
-        display: block;
-    }
 }
 
 
 .pc-menu {
     display: none;
+}
+
+@media (min-width: 641px) {
+    .pc-menu {
+        display: block;
+    }
 }
