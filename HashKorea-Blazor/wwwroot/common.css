@@ -33,3 +33,8 @@
 }
 
 /* list component - end */
+
+
+.full-height {
+    height: 100vh;
+}

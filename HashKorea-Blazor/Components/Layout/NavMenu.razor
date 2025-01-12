@@ -1,19 +1,66 @@
 ﻿@using MudBlazor
 
+@* [Done] Radzen - Full height overlay Sidebar for mobile *@
+@* TO DO: Radzen - Icon Sidebar for PC  *@
+@* [Done] Radzen - PanelMenu for side menu design *@
+
 <div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">Hash Korea</a>
     </div>
 </div>
 
-<input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+<input type="checkbox" title="Navigation menu" class="navbar-toggler" @onclick="ToggleSidebar" />
 
-@* TO DO: Radzen - Full height overlay Sidebar for mobile *@
-@* TO DO: Radzen - Icon Sidebar for PC  *@
-@* TO DO: Radzen - PanelMenu for side menu design *@
+@* mobile sidebar menu*@
+<RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" style="position: absolute; z-index: 3" class="full-height">
+    <RadzenStack AlignItems="Radzen.AlignItems.End" class="rz-p-2">
+        <RadzenButton Icon="west" Variant="Radzen.Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
+    </RadzenStack>
+    <RadzenPanelMenu>
+        @* <RadzenPanelMenuItem Text="Users" Icon="account_box" /> *@
+        <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
 
-<div style="color: #d7d7d7;" class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <MudNavMenu Style="color: #d7d7d7;">
+        <RadzenPanelMenuItem Text="Information" Icon="info" Expanded="true">
+            <RadzenPanelMenuItem Text="Tour Map" Icon="map" Path="/tour-map" />
+            <RadzenPanelMenuItem Text="Korea Is" Icon="flag" Path="/korea-is" />
+            <RadzenPanelMenuItem Text="Promotions" Icon="local_offer" Path="/promotions" />
+        </RadzenPanelMenuItem>
+
+        <RadzenPanelMenuItem Text="Community" Icon="forum" Expanded="true">
+            <RadzenPanelMenuItem Text="Notice" Icon="announcement" Path="/notice" />
+            <RadzenPanelMenuItem Text="Free Board" Icon="dashboard" Path="/free-board" />
+            <RadzenPanelMenuItem Text="Q&A" Icon="question_answer" Path="/qna" />
+        </RadzenPanelMenuItem>
+    </RadzenPanelMenu>
+    @* <div class="rz-p-4">
+        Sidebar
+    </div> *@
+</RadzenSidebar>
+
+
+@* pc sidebar menu*@
+<div class="full-height pc-menu">
+    <RadzenPanelMenu Class="rz-h-100">
+        <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
+
+        <RadzenPanelMenuItem Text="Information" Icon="info" Expanded="true">
+            <RadzenPanelMenuItem Text="Tour Map" Icon="map" Path="/tour-map" />
+            <RadzenPanelMenuItem Text="Korea Is" Icon="flag" Path="/korea-is" />
+            <RadzenPanelMenuItem Text="Promotions" Icon="local_offer" Path="/promotions" />
+        </RadzenPanelMenuItem>
+
+        <RadzenPanelMenuItem Text="Community" Icon="forum" Expanded="true">
+            <RadzenPanelMenuItem Text="Notice" Icon="announcement" Path="/notice" />
+            <RadzenPanelMenuItem Text="Free Board" Icon="dashboard" Path="/free-board" />
+            <RadzenPanelMenuItem Text="Q&A" Icon="question_answer" Path="/qna" />
+        </RadzenPanelMenuItem>
+    </RadzenPanelMenu>
+</div>
+
+@* default menu *@
+
+@* <MudNavMenu Style="color: #d7d7d7;">
         <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
 
         <MudNavGroup Title="Information" Icon="@Icons.Material.Filled.Info" Expanded="true">
@@ -27,30 +74,18 @@
             <MudNavLink Href="free-board" Icon="@Icons.Material.Filled.Dashboard">Free Board</MudNavLink>
             <MudNavLink Href="qna" Icon="@Icons.Material.Filled.QuestionAnswer">Q&A</MudNavLink>
         </MudNavGroup>
-    </MudNavMenu>
-</div>
+    </MudNavMenu> *@
 
-@* default menu *@
+    @if (sidebarExpanded)
+    {
+        <div @onclick="@(() => sidebarExpanded = false)" class="rz-dialog-mask" style="position: fixed; z-index: 2; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0, 0, 0, 0.5);"></div>
+    }
 
-@* <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
+@code {
+    bool sidebarExpanded = false;
 
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-    </nav>
-</div> *@
-
+    private void ToggleSidebar()
+    {
+        sidebarExpanded = !sidebarExpanded;
+    }
+}
