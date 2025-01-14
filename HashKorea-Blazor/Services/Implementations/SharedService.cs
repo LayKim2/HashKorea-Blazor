@@ -125,6 +125,48 @@ public class SharedService : ISharedService
     }
 
     [Authorize]
+    public async Task<ServiceResponse<EditPostResponseDto>> GetPostEdit(int postId)
+    {
+        var response = new ServiceResponse<EditPostResponseDto>();
+
+        try
+        {
+            var userId = await GetUserId();
+
+            var existingPost = await _context.UserPosts.FirstOrDefaultAsync(p => p.Id == postId && p.UserId == userId);
+
+            if (existingPost == null)
+            {
+                response.Success = false;
+                response.Code = MessageCode.Custom.NOT_FOUND_POST.ToString();
+                response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_POST];
+                return response;
+            }
+
+            var responseDto = new EditPostResponseDto
+            {
+                Id = existingPost.Id,
+                Type = existingPost.Type,
+                Category = existingPost.Category,
+                CategoryCD = existingPost.CategoryCD,
+                Title = existingPost.Title,
+                Content = existingPost.Content
+            };
+
+            response.Data = responseDto;
+        }
+        catch (Exception ex)
+        {
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: GetPostEdit", ex.Message, $"post id: {postId}");
+        }
+
+        return response;
+    }
+
+
+    [Authorize]
     public async Task<ServiceResponse<bool>> DeletePost(int postId)
     {
         var response = new ServiceResponse<bool>();

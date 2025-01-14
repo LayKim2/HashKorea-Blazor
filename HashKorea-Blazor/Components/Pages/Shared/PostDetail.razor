@@ -38,7 +38,7 @@ else if (post != null)
                         @if (post.IsOwner)
                         {
                             <MudStack Row="true" Justify="Justify.FlexEnd" Class="mt-2">
-                                <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Success" Variant="Radzen.Variant.Flat" Size="ButtonSize.Medium" />
+                                <RadzenButton Icon="edit" Text="Edit" ButtonStyle="ButtonStyle.Success" Variant="Radzen.Variant.Flat" Size="ButtonSize.Medium" Click="NavigateToEdit" />
                                 <RadzenButton Icon="delete" Text="Delete" ButtonStyle="ButtonStyle.Danger" Variant="Radzen.Variant.Flat" Size="ButtonSize.Medium" Click="ConfirmDelete" />
                             </MudStack>
                         }
@@ -143,8 +143,12 @@ else if (post != null)
         NavigationManager.NavigateTo(ReturnUrl);
     }
 
-}
+    private void NavigateToEdit()
+    {
+        NavigationManager.NavigateTo($"/post/edit/{PostId}");
+    }
 
+}
 
 
 <style>
