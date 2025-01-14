@@ -105,6 +105,7 @@ public class SharedService : ISharedService
             var postDto = new GetPostDetailResponsetDto
             {
                 Id = post.Id,
+                Type = post.Type,
                 Title = post.Title,
                 Content = post.Content,
                 CreatedDate = post.CreatedDate,

@@ -70,11 +70,17 @@ window.createBlobUrl = function (base64, contentType) {
 };
 
 // 2.3 init TinyMCE for Editor
-window.initTinyMCE = (selector) => {
+window.initTinyMCE = (selector, content = '') => {
+    //const existingEditor = tinymce.get(selector);
+
+    //if (existingEditor) {
+    //    existingEditor.remove(); // 에디터 파괴
+    //}
+
     tinymce.init({
         selector: selector || 'textarea',
         plugins: [
-            'image', 'link', 'code', 'table'
+            'image', 'link', 'code', 'table'    
         ],
         menubar: false,
         toolbar: 'fontfamily fontsize forecolor backcolor uploadImageButton bold italic underline | alignleft aligncenter alignright alignjustify | numlist bullist outdent indent',
@@ -133,6 +139,11 @@ window.initTinyMCE = (selector) => {
                         fileInput.click();
                     }
                 });
+
+                if (content) {
+                    editor.setContent(content); // Set content if provided
+                }
+
             });
 
             //editor.on('change', function () {

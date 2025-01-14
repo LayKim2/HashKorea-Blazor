@@ -25,23 +25,23 @@
                 <!-- Period -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
                     </MudSelect>
                 </MudItem>
 
                 <!-- Location -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
                     </MudSelect>
                 </MudItem>
 
                 <!-- Category -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                               @bind-Value="model.CategoryCD"
-                               For="@(() => model.CategoryCD)">
+                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                    Value="model.Category" ValueChanged="OnCategoryChanged">
+
                         @foreach (var category in categories)
                         {
                             <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
@@ -75,31 +75,42 @@
 
     private string postType = string.Empty;
 
-    private string postTitle = string.Empty;
-
-    private List<GetCommonCodeResponseDto> categories = new();
-
-    private string selectedCategoryCode;
-
     bool success;
+
+    // TO DO: get commoncode
+    private List<GetCommonCodeResponseDto> categories = new()
+    {
+        new GetCommonCodeResponseDto { Id = 1, Type = "Promotion", Code = "01", Name = "UpComing" },
+        new GetCommonCodeResponseDto { Id = 3, Type = "Promotion", Code = "02", Name = "Current" },
+        new GetCommonCodeResponseDto { Id = 4, Type = "Promotion", Code = "03", Name = "Past" },
+        new GetCommonCodeResponseDto { Id = 5, Type = "Promotion", Code = "04", Name = "Other Information" }
+    };
+
 
     // add js logic
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        if (firstRender)
-        {
-            await JSRuntime.InvokeVoidAsync("initTinyMCE", "#tinymceEditor");
-        }
+        StateHasChanged();
+
+        await JSRuntime.InvokeVoidAsync("initTinyMCE", "#tinymceEditor", model.Content);
+
     }
 
     protected override async Task OnInitializedAsync()
     {
-        var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
-        if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var type))
-        {
-            postType = type;
-            await LoadCategories();
-        }
+        // TO DO: change to set by url parameter => try to parameter set of life ~ 
+        // var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
+
+        // if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var type))
+        // {
+        //     postType = type;
+        //     model.Type = type;
+
+        //     await LoadCategories();
+        // }
+
+        postType = "Promotion";
+        model.Type = "Promotion";
 
         if (PostId.HasValue)
         {
@@ -113,6 +124,7 @@
         if (response.Success && response.Data != null)
         {
             categories = response.Data;
+            StateHasChanged();
         }
     }
 
@@ -133,6 +145,17 @@
         } else {
             // error message
         }
+
+        StateHasChanged();
+    }
+
+    private void OnCategoryChanged(string selectedCode)
+    {
+        model.CategoryCD = selectedCode; 
+        var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCode);
+        model.Category = selectedCategory?.Name ?? string.Empty;
+
+        StateHasChanged();
     }
 
     private async Task SavePost()
@@ -144,23 +167,14 @@
 
             var (updatedContent, imageFiles) = await ProcessEditorImages(editorContent);
 
-            var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCategoryCode);
+            model.Content = updatedContent;
+            model.ImageFiles = imageFiles;
 
-            var requestModel = new PostRequestDto
-                {
-                    PostId = PostId,
-                    Type = postType,
-                    Category = selectedCategory?.Name ?? string.Empty,
-                    CategoryCD = selectedCategoryCode,
-                    Title = postTitle,
-                    Content = updatedContent,
-                    ImageFiles = imageFiles
-                };
-
-            var response = await SharedService.UpdatePost(requestModel);
+            var response = await SharedService.UpdatePost(model);
             if (response.Success)
             {
-                NavigationManager.NavigateTo("/posts");
+                // TO DO: dynamic
+                NavigationManager.NavigateTo("/promotions");
             }
             else
             {
@@ -210,9 +224,9 @@
         return (updatedContent, imageFiles);
     }
 
-    private void OnValidSubmit(EditContext context)
+    private async void OnValidSubmit(EditContext context)
     {
         success = true;
-        StateHasChanged();
+        await SavePost();
     }
 }

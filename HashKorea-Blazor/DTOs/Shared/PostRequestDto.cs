@@ -17,7 +17,8 @@ public class PostRequestDto
     [StringLength(200, MinimumLength = 1)]
     public string Title { get; set; }
 
-    [Required]
+    // TO DO: add required
+    //[Required]
     public string Content { get; set; } = string.Empty;
 
     // TO DO: max size and file type

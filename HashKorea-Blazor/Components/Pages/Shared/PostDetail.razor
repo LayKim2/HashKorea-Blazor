@@ -145,7 +145,8 @@ else if (post != null)
 
     private void NavigateToEdit()
     {
-        NavigationManager.NavigateTo($"/post/edit/{PostId}");
+        NavigationManager.NavigateTo($"/post/edit/{PostId}?Type=" + post.Type, true);
+        // NavigationManager.NavigateTo($"/post/edit/{PostId}", true);
     }
 
 }
