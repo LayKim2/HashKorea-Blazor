@@ -7,6 +7,7 @@ using HashKorea.Data;
 using HashKorea.Models;
 using HashKorea.Responses;
 using Amazon;
+using HashKorea.DTOs.Shared;
 
 namespace HashKorea.Services;
 
@@ -49,16 +50,30 @@ public class FileService : IFileService
         return allowedExtensions.Contains(fileExtension.ToLower());
     }
 
-    public async Task<ServiceResponse<(string S3Path, string CloudFrontUrl)>> UploadFile(IFormFile file, string folderPath)
+    public static IFormFile ConvertToIFormFile(MultipartFile multipartFile)
+    {
+        var stream = new MemoryStream(multipartFile.Content);
+        return new FormFile(stream, 0, multipartFile.Content.Length, multipartFile.FileName, multipartFile.FileName)
+        {
+            Headers = new HeaderDictionary(),
+            ContentType = multipartFile.ContentType
+        };
+    }
+
+    public async Task<ServiceResponse<(string S3Path, string CloudFrontUrl)>> UploadFile(MultipartFile file, string folderPath)
     {
         var response = new ServiceResponse<(string S3Path, string CloudFrontUrl)>();
         try
         {
+            // added new one for convert image from byte[] to IFormFile
+            // TO DO: Check if I need this logic
+            var formFile = ConvertToIFormFile(file);
+
             var fileName = $"{Guid.NewGuid()}_{DateTime.UtcNow:yyyyMMddHHmmss}{Path.GetExtension(file.FileName)}";
 
             var s3Key = $"{folderPath.TrimStart('/')}/{fileName}";
 
-            using (var fileStream = file.OpenReadStream())
+            using (var fileStream = formFile.OpenReadStream())
             {
                 var uploadRequest = new TransferUtilityUploadRequest
                 {

@@ -7,10 +7,11 @@
 @using HashKorea.DTOs.Shared
 @using Microsoft.AspNetCore.Authorization
 @using Microsoft.AspNetCore.WebUtilities
-@using Tizzani.MudBlazor.HtmlEditor
+@using System.Text.RegularExpressions
 
 @inject ISharedService SharedService
 @inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
 
 @rendermode InteractiveServer
 
@@ -43,9 +44,9 @@
 
         <MudTextField @bind-Value="postTitle" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-1" />
 
-        <MudHtmlEditor @ref="htmlEditor">
-            <MudHtmlToolbarOptions InsertImage="true" />
-        </MudHtmlEditor>
+        <MudItem>
+            <textarea id="tinymceEditor"></textarea>
+        </MudItem>
 
         <MudItem Class="d-flex justify-end mt-4">
             <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" OnClick="SavePost">Save</MudButton>
@@ -60,11 +61,19 @@
 
     private string postTitle = string.Empty;
 
-    private MudHtmlEditor htmlEditor;
 
     private List<GetCommonCodeResponseDto> categories = new();
 
     private string selectedCategoryCode;
+
+    // add js logic
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("initTinyMCE", "#tinymceEditor");
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -92,33 +101,81 @@
 
     private async Task LoadExistingPost()
     {
+        // TO DO
         // Implement logic to load existing post data
     }
 
     private async Task SavePost()
     {
-        var content = await htmlEditor.GetHtml();
-        var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCategoryCode);
+        try
+        {
+            var editorContent = await JSRuntime.InvokeAsync<string>("getTinyMCEContent", "tinymceEditor");
 
-        var requestModel = new PostRequestDto
+            var (updatedContent, imageFiles) = await ProcessEditorImages(editorContent);
+
+            var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCategoryCode);
+
+            var requestModel = new PostRequestDto
+                {
+                    PostId = PostId,
+                    Type = postType,
+                    Category = selectedCategory?.Name ?? string.Empty,
+                    CategoryCD = selectedCategoryCode,
+                    Title = postTitle,
+                    Content = updatedContent,
+                    ImageFiles = imageFiles
+                };
+
+            var response = await SharedService.UpdatePost(requestModel);
+            if (response.Success)
             {
-                PostId = PostId,
-                Type = postType,
-                Category = selectedCategory?.Name ?? string.Empty,
-                CategoryCD = selectedCategoryCode,
-                Title = postTitle,
-                Content = content,
-            };
-
-        var response = await SharedService.AddPost(requestModel);
-        if (response.Success)
-        {
-            NavigationManager.NavigateTo("/posts");
+                NavigationManager.NavigateTo("/posts");
+            }
+            else
+            {
+                // error message
+            }
         }
-        else
+        catch (Exception ex)
         {
-            // Handle error
+            // error message
         }
     }
-    
+
+    private async Task<(string updatedContent, List<MultipartFile> imageFiles)> ProcessEditorImages(string editorContent)
+    {
+        var blobUrlPattern = @"src=""(blob:[^""]+)""";
+        var matches = Regex.Matches(editorContent, blobUrlPattern);
+
+        var imageFiles = new List<MultipartFile>();
+        var updatedContent = editorContent;
+
+        foreach (Match match in matches)
+        {
+            var blobUrl = match.Groups[1].Value;
+            var placeholder = $"{{{{image_{imageFiles.Count}}}}}";
+
+            updatedContent = updatedContent.Replace(blobUrl, placeholder);
+
+            try
+            {
+                var blob = await JSRuntime.InvokeAsync<byte[]>("fetchBlobData", blobUrl);
+
+                var file = new MultipartFile
+                    {
+                        FileName = $"image_{imageFiles.Count}.png",
+                        ContentType = "image/png",
+                        Content = blob
+                    };
+
+                imageFiles.Add(file);
+            }
+            catch (Exception ex)
+            {
+                // error message
+            }
+        }
+
+        return (updatedContent, imageFiles);
+    }
 }

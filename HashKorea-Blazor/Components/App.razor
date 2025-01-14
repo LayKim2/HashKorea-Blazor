@@ -10,6 +10,12 @@
     <link rel="stylesheet" href="@Assets["common.css"]" />
     <link rel="stylesheet" href="@Assets["HashKorea-Blazor.styles.css"]" />
 
+    @* jquery *@
+    @* <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script> *@
+
+    @* TinyMCE *@
+    <script src="https://cdn.tiny.cloud/1/d9ax1d1slbyktyetbrekpn10zjuwlldrqgq3bmxcf8shckrq/tinymce/7/tinymce.min.js" referrerpolicy="origin"></script>
+
     <!-- mudblazor -->
     <link rel="stylesheet" href="_content/MudBlazor/MudBlazor.min.css" />
 
@@ -26,17 +32,10 @@
     <!-- radzen blazor-->
     <script src="_content/Radzen.Blazor/Radzen.Blazor.js?v=@(typeof(Radzen.Colors).Assembly.GetName().Version)"></script>
 
-    @* Tizzani.MudBlazor.HtmlEditor *@
-    <link href="_content/Tizzani.MudBlazor.HtmlEditor/MudHtmlEditor.css" rel="stylesheet" />
-
     <script src="/js/common.js"></script>
 </head>
 
 <body>
-
-    @* Tizzani.MudBlazor.HtmlEditor *@
-    <script src="https://cdn.jsdelivr.net/npm/quill@2.0.2/dist/quill.js"></script>
-    <script src="_content/Tizzani.MudBlazor.HtmlEditor/quill-blot-formatter.min.js"></script>
 
     <Routes @rendermode="InteractiveServer" />
     <script src="_framework/blazor.web.js"></script>

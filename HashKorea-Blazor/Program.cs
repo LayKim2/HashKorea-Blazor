@@ -75,6 +75,20 @@ builder.Services.AddDbContext<DataContext>(options =>
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// get image of base64 or byte file( you can`t get base64 string from js if you don`t have this one) - start
+// nuget: MessagePack
+builder.Services.AddSignalR()
+    .AddMessagePackProtocol(); // MessagePack 
+
+builder.Services.AddServerSideBlazor()
+    .AddHubOptions(options =>
+    {
+        options.MaximumReceiveMessageSize = 1024 * 1024 * 50; // MAX 50MB
+    });
+
+// get image of base64 or byte file( you can`t get base64 string from js if you don`t have this one) - end
+
+
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;

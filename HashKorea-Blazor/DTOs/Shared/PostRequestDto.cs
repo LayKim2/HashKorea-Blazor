@@ -21,10 +21,5 @@ public class PostRequestDto
     public string Content { get; set; } = string.Empty;
 
     // TO DO: max size and file type
-    //public List<IFormFile>? ImageFiles { get; set; }
-
-    //[DataType(DataType.Upload)]
-    ////[MaxFileSize(5 * 1024 * 1024)]
-    ////[AllowedExtensions(new string[] { ".jpg", ".png", ".gif" })]
-    //public IFormFile MainImage { get; set; }
+    public List<MultipartFile> ImageFiles { get; set; } = new List<MultipartFile>();
 }
