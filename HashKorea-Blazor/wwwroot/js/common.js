@@ -83,6 +83,16 @@ window.initTinyMCE = (selector) => {
             toolbar_mode: 'wrap',
             toolbar: 'fontfamily fontsize forecolor backcolor | bold italic underline | alignleft aligncenter alignright alignjustify | numlist bullist | removeformat'
         },
+        content_style: `
+            img {
+                width: 100%;
+                max-width: 100%;
+                height: auto;
+                object-fit: cover;
+                border-radius: 8px;
+                margin: 1rem 0;
+            }
+        `,
         setup: function (editor) {
             editor.on('init', function () {
 
