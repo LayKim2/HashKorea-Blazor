@@ -84,17 +84,22 @@ window.initTinyMCE = (selector) => {
             toolbar: 'fontfamily fontsize forecolor backcolor | bold italic underline | alignleft aligncenter alignright alignjustify | numlist bullist | removeformat'
         },
         content_style: `
-            img {
-                width: 100%;
-                max-width: 100%;
-                height: auto;
-                object-fit: cover;
-                border-radius: 8px;
-                margin: 1rem 0;
-            }
+
         `,
         setup: function (editor) {
             editor.on('init', function () {
+
+                const editorContainer = editor.getContainer();
+                const setEditorHeight = () => {
+                    const windowHeight = window.innerHeight;
+                    const offsetTop = editorContainer.getBoundingClientRect().top;
+                    const newHeight = windowHeight - offsetTop - 20; // Add padding/margin as needed
+                    editorContainer.style.height = `${newHeight}px`;
+                };
+
+                // Initialize and adjust height on window resize
+                setEditorHeight();
+                window.addEventListener('resize', setEditorHeight);
 
                 // Upload Image Custom Button
                 editor.ui.registry.addButton('uploadImageButton', {
@@ -110,8 +115,7 @@ window.initTinyMCE = (selector) => {
                                 const reader = new FileReader();
                                 reader.onload = (e) => {
                                     const base64String = e.target.result;
-                                    editor.insertContent(`<img src="${base64String}" alt="${file.name}" />`);
-                                    console.log("base64: " + base64String);
+                                    editor.insertContent(`<img src="${base64String}" alt="${file.name}" style="width:100%; max-width:100%; height:auto; object-fit:cover; border-radius:8px; margin:1rem 0;" />`);
                                 };
                                 reader.readAsDataURL(file); // 파일을 Base64로 변환
                             }

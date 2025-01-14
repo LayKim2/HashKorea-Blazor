@@ -57,6 +57,7 @@ public class SharedService : ISharedService
         {
             var posts = await _context.UserPosts
                 .Where(p => p.Type == type)
+                .OrderByDescending(p => p.Id)
                 .Select(p => new GetPostsResponseDto
                 {
                     Id = p.Id,

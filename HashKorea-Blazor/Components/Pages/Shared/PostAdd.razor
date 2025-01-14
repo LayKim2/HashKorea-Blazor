@@ -17,54 +17,71 @@
 
 <MudPaper Elevation="3" Class="pa-4" Style="height: 100vh; display: flex; flex-direction: column;">
     <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
-        <MudGrid Spacing="2" Class="mb-1">
-            <MudItem xs="12" md="4">
-                <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable>
-                    <MudSelectItem Value="@("all")" />
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable>
-                    <MudSelectItem Value="@("all")" />
-                </MudSelect>
-            </MudItem>
-            <MudItem xs="12" md="4">
-                <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
-                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                           @bind-Value="selectedCategoryCode">
-                    @foreach (var category in categories)
-                    {
-                        <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
-                    }
-                </MudSelect>
-            </MudItem>
-        </MudGrid>
+        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+            <DataAnnotationsValidator />
+            @* <ValidationSummary/> *@
 
-        <MudTextField @bind-Value="postTitle" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-1" />
+            <MudGrid Spacing="2" Class="mb-1">
+                <!-- Period -->
+                <MudItem xs="12" md="4" Class="mb-2">
+                    <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                    </MudSelect>
+                </MudItem>
 
-        <MudItem>
-            <textarea id="tinymceEditor"></textarea>
-        </MudItem>
+                <!-- Location -->
+                <MudItem xs="12" md="4" Class="mb-2">
+                    <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                    </MudSelect>
+                </MudItem>
 
-        <MudItem Class="d-flex justify-end mt-4">
-            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" OnClick="SavePost">Save</MudButton>
-        </MudItem>
+                <!-- Category -->
+                <MudItem xs="12" md="4" Class="mb-2">
+                    <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                               @bind-Value="model.CategoryCD"
+                               For="@(() => model.CategoryCD)">
+                        @foreach (var category in categories)
+                        {
+                            <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
+                        }
+                    </MudSelect>
+                </MudItem>
+            </MudGrid>
+
+            <!-- Title -->
+            <MudTextField @bind-Value="model.Title" For="@(() => model.Title)" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-10"/>
+
+            <!-- TinyMCE -->
+            <MudItem Class="mb-2">
+                <textarea id="tinymceEditor"></textarea>
+            </MudItem>
+
+            <!-- Save  -->
+            <MudItem Class="d-flex justify-end mt-4">
+                <MudCardActions>
+                    <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" ButtonType="MudBlazor.ButtonType.Submit">Save</MudButton>
+                </MudCardActions>
+            </MudItem>
+        </EditForm>
     </MudContainer>
 </MudPaper>
 
 @code {
     [Parameter] public int? PostId { get; set; }
 
+    private PostRequestDto model = new PostRequestDto();
+
     private string postType = string.Empty;
 
     private string postTitle = string.Empty;
 
-
     private List<GetCommonCodeResponseDto> categories = new();
 
     private string selectedCategoryCode;
+
+    bool success;
 
     // add js logic
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -86,27 +103,41 @@
 
         if (PostId.HasValue)
         {
-            await LoadExistingPost();
+            await LoadExistingPost(PostId.Value);
         }
     }
 
     private async Task LoadCategories()
     {
         var response = await SharedService.GetCommonCodes(postType);
-        if (response.Success)
+        if (response.Success && response.Data != null)
         {
             categories = response.Data;
         }
     }
 
-    private async Task LoadExistingPost()
+    private async Task LoadExistingPost(int postId)
     {
-        // TO DO
-        // Implement logic to load existing post data
+        var response = await SharedService.GetPostEdit(postId);
+
+        if (response.Success && response.Data != null)
+        {
+            var existingPost = response.Data;
+
+            model.PostId = existingPost.Id;
+            model.Type = existingPost.Type;
+            model.Category = existingPost.Category;
+            model.CategoryCD = existingPost.CategoryCD;
+            model.Title = existingPost.Title;
+            model.Content = existingPost.Content;
+        } else {
+            // error message
+        }
     }
 
     private async Task SavePost()
     {
+
         try
         {
             var editorContent = await JSRuntime.InvokeAsync<string>("getTinyMCEContent", "tinymceEditor");
@@ -177,5 +208,11 @@
         }
 
         return (updatedContent, imageFiles);
+    }
+
+    private void OnValidSubmit(EditContext context)
+    {
+        success = true;
+        StateHasChanged();
     }
 }
