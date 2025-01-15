@@ -71,11 +71,11 @@ window.createBlobUrl = function (base64, contentType) {
 
 // 2.3 init TinyMCE for Editor
 window.initTinyMCE = (selector, content = '') => {
-    //const existingEditor = tinymce.get(selector);
+    const existingEditor = tinymce.get(selector.replace('#', ''));
 
-    //if (existingEditor) {
-    //    existingEditor.remove(); // 에디터 파괴
-    //}
+    if (existingEditor) {
+        existingEditor.remove();
+    }
 
     tinymce.init({
         selector: selector || 'textarea',
@@ -121,7 +121,7 @@ window.initTinyMCE = (selector, content = '') => {
                                 const reader = new FileReader();
                                 reader.onload = (e) => {
                                     const base64String = e.target.result;
-                                    editor.insertContent(`<img src="${base64String}" alt="${file.name}" style="width:100%; max-width:100%; height:auto; object-fit:cover; border-radius:8px; margin:1rem 0;" />`);
+                                    editor.insertContent(`<img src="${base64String}" alt="${file.name}" style="max-width:100%; height:auto; object-fit:cover; border-radius:8px; margin:1rem 0;" />`);
                                 };
                                 reader.readAsDataURL(file); // 파일을 Base64로 변환
                             }

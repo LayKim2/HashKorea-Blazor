@@ -39,8 +39,8 @@
                 <!-- Category -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
-                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                    Value="model.Category" ValueChanged="OnCategoryChanged">
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                               Value="model.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => model.CategoryCD)">
 
                         @foreach (var category in categories)
                         {
@@ -75,6 +75,9 @@
 
     private string postType = string.Empty;
 
+    private bool isDataLoaded = false; 
+    private bool isContentLoaded = false; 
+
     bool success;
 
     // TO DO: get commoncode
@@ -86,14 +89,29 @@
         new GetCommonCodeResponseDto { Id = 5, Type = "Promotion", Code = "04", Name = "Other Information" }
     };
 
+    private List<GetCommonCodeResponseDto> locations = new()
+{
+    new GetCommonCodeResponseDto { Id = 1, Type = "Location", Code = "01", Name = "Seoul" },
+    new GetCommonCodeResponseDto { Id = 2, Type = "Location", Code = "02", Name = "Gyeonggi" },
+    new GetCommonCodeResponseDto { Id = 3, Type = "Location", Code = "03", Name = "Gangwon" },
+    new GetCommonCodeResponseDto { Id = 4, Type = "Location", Code = "04", Name = "Chungbuk" },
+    new GetCommonCodeResponseDto { Id = 5, Type = "Location", Code = "05", Name = "Chungnam" },
+    new GetCommonCodeResponseDto { Id = 6, Type = "Location", Code = "06", Name = "Jeonbuk" },
+    new GetCommonCodeResponseDto { Id = 7, Type = "Location", Code = "07", Name = "Jeonnam" },
+    new GetCommonCodeResponseDto { Id = 8, Type = "Location", Code = "08", Name = "Gyeongbuk" },
+    new GetCommonCodeResponseDto { Id = 9, Type = "Location", Code = "09", Name = "Gyeongnam" },
+    new GetCommonCodeResponseDto { Id = 10, Type = "Location", Code = "10", Name = "Jeju" }
+};
+
 
     // add js logic
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        StateHasChanged();
-
-        await JSRuntime.InvokeVoidAsync("initTinyMCE", "#tinymceEditor", model.Content);
-
+        if (isDataLoaded && !isContentLoaded)
+        {
+            await JSRuntime.InvokeVoidAsync("initTinyMCE", "#tinymceEditor", model.Content ?? "");
+            isContentLoaded = true;
+        }
     }
 
     protected override async Task OnInitializedAsync()
@@ -115,6 +133,9 @@
         if (PostId.HasValue)
         {
             await LoadExistingPost(PostId.Value);
+        } else {
+            model = new();
+            StateHasChanged();
         }
     }
 
@@ -142,20 +163,23 @@
             model.CategoryCD = existingPost.CategoryCD;
             model.Title = existingPost.Title;
             model.Content = existingPost.Content;
-        } else {
+
+            isDataLoaded = true;
+
+        }
+        else
+        {
             // error message
+            model = new();
         }
 
         StateHasChanged();
+
     }
 
     private void OnCategoryChanged(string selectedCode)
     {
-        model.CategoryCD = selectedCode; 
-        var selectedCategory = categories.FirstOrDefault(c => c.Code == selectedCode);
-        model.Category = selectedCategory?.Name ?? string.Empty;
-
-        StateHasChanged();
+        model.SetCategory(selectedCode, categories);
     }
 
     private async Task SavePost()

@@ -23,4 +23,11 @@ public class PostRequestDto
 
     // TO DO: max size and file type
     public List<MultipartFile> ImageFiles { get; set; } = new List<MultipartFile>();
+
+    public void SetCategory(string code, List<GetCommonCodeResponseDto> categories)
+    {
+        var selectedCategory = categories.FirstOrDefault(c => c.Code == code);
+        Category = selectedCategory?.Name ?? string.Empty;
+        CategoryCD = code;
+    }
 }

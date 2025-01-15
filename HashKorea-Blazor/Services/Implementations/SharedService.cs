@@ -313,8 +313,10 @@ public class SharedService : ISharedService
                 existingPost.Content = content;
                 existingPost.LastUpdatedDate = DateTime.Now;
 
-                var existingImages = _context.UserPostImages.Where(img => img.PostId == existingPost.Id).ToList();
-                _context.UserPostImages.RemoveRange(existingImages);
+                // It was issued when you update post. because when you update post, the src url is like storage url -> do not upload again.
+                //var existingImages = _context.UserPostImages.Where(img => img.PostId == existingPost.Id).ToList();
+                //_context.UserPostImages.RemoveRange(existingImages);
+
                 await _context.SaveChangesAsync();
 
                 foreach (var image in userPostImages)
@@ -410,7 +412,13 @@ public class SharedService : ISharedService
                 if (uploadResult.Success)
                 {
                     //content = content.Replace(match.Value, $"<img src=\"{uploadResult.Data.CloudFrontUrl}\" />");
-                    content = content.Replace(match.Value, $"<img src=\"{uploadResult.Data.S3Path}\" />");
+
+                    // replace src only
+                    var pattern = @"<img\s+([^>]*\s+)?src\s*=\s*""([^""]*)""([^>]*)>";
+                    content = Regex.Replace(content, pattern, match =>
+                    {
+                        return $"<img {match.Groups[1].Value}src=\"{uploadResult.Data.S3Path}\" {match.Groups[3].Value}>";
+                    });
 
                     userPostImages.Add(new UserPostImage
                     {
