@@ -49,7 +49,7 @@ builder.Services.AddSession(options =>
     options.IdleTimeout = TimeSpan.FromMinutes(30);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.SameAsRequest;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 });
 
 // radzen blazor
@@ -82,7 +82,9 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 // Redis
 builder.Services.AddStackExchangeRedisCache(option =>
-    option.Configuration = builder.Configuration.GetConnectionString("Cache"));
+    //option.Configuration = "hashkorea-redis.cluster-cfg.ap-northeast-2.cache.amazonaws.com:6379"
+    option.Configuration = builder.Configuration.GetConnectionString("Cache")
+);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
