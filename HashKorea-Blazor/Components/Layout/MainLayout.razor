@@ -9,12 +9,23 @@
         <div class="top-row px-4 d-flex justify-content-end align-items-center">
             <TopMenu />
         </div>
-        
+
         <article class="content px-4">
             @Body
         </article>
     </main>
 </div>
+
+<MudOverlay @bind-Visible="isLoading" DarkBackground="false" ZIndex="9999" AutoClose="true">
+    <div id="app" style="margin: 0 auto; width: 100vw; height: 100vh">
+        <div style="padding-top: 150px; ">
+            <img src="/images/main-icon.png" style="width: 70px; grid-area: 1 / 1 / auto / auto;top: 50%;left: 50%;transform: translate(-50%, -50%);position: absolute;">
+            <div style="width: 120px; grid-area: 1 / 1 / auto / auto; top: 50%; left: 50%; transform: translate(-50%, -50%); position: absolute;">
+                <img src="/images/spinner.svg" style="width: 120px; animation-name: spin;animation-duration: 800ms;animation-iteration-count: infinite;animation-timing-function: linear;">
+            </div>
+        </div>
+    </div>
+</MudOverlay>
 
 <div id="blazor-error-ui" data-nosnippet>
     An unhandled error has occurred.
@@ -31,3 +42,17 @@
 <RadzenNotification @rendermode="InteractiveServer" />
 <RadzenContextMenu @rendermode="InteractiveServer" />
 <RadzenTooltip @rendermode="InteractiveServer" />
+
+@code {
+
+    private bool isLoading = true;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+}

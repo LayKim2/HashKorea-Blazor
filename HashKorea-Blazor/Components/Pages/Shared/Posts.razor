@@ -10,15 +10,19 @@
 
 @rendermode InteractiveServer
 
-@if (isLoading)
-{
-    <RadzenStack Orientation="Radzen.Orientation.Vertical" AlignItems="Radzen.AlignItems.Center" JustifyContent="JustifyContent.Center" Class="rz-m-12" Gap="2rem">
-        <RadzenProgressBarCircular Value="100" Mode="ProgressBarMode.Indeterminate" Size="ProgressBarCircularSize.Large" />
-        <RadzenText TextStyle="TextStyle.Subtitle1">loading...</RadzenText>
-    </RadzenStack>
+@if(isLoading) {
+    <MudOverlay @bind-Visible="isLoading" DarkBackground="false" ZIndex="9999" AutoClose="true">
+        <div id="app" style="margin: 0 auto; width: 100vw; height: 100vh">
+            <div style="padding-top: 150px; ">
+                <img src="/images/main-icon.png" style="width: 70px; grid-area: 1 / 1 / auto / auto;top: 50%;left: 50%;transform: translate(-50%, -50%);position: absolute;">
+                <div style="width: 120px; grid-area: 1 / 1 / auto / auto; top: 50%; left: 50%; transform: translate(-50%, -50%); position: absolute;">
+                    <img src="/images/spinner.svg" style="width: 120px; animation-name: spin;animation-duration: 800ms;animation-iteration-count: infinite;animation-timing-function: linear;">
+                </div>
+            </div>
+        </div>
+    </MudOverlay>
 } else {
-
-    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4">
+    <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4 rz-pt-12 rz-pb-8">
         <RadzenText TextStyle="TextStyle.H6">Total Results: @model.Count</RadzenText>
         @if (User.Identity?.IsAuthenticated == true)
         {
@@ -31,7 +35,7 @@
         <Virtualize Items="model" Context="item" ItemSize="300" OverscanCount="5">
             <RadzenCard class="list-card" data-id="@item.Id" @onclick="@(() => PostDetail(item.Id))">
                 <div class="image-container">
-                    <RadzenImage Path="@(string.IsNullOrEmpty(item.MainImageUrl) ? "/main-icon.png" : item.MainImageUrl)" class="list-image lazy-image" loading="lazy" />
+                    <RadzenImage Path="@(string.IsNullOrEmpty(item.MainImageUrl) ? "/images/main-icon.png" : item.MainImageUrl)" class="list-image lazy-image" loading="lazy" />
                 </div>
                 <div class="card-content">
                     <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
@@ -76,7 +80,6 @@
         if (response.Success)
         {
             model = response.Data;
-            StateHasChanged();
         }
         else
         {

@@ -15,24 +15,36 @@
 
 @rendermode InteractiveServer
 
+
+<MudOverlay @bind-Visible="isLoading" DarkBackground="true" ZIndex="9999" AutoClose="true">
+    <div id="app" style="margin: 0 auto; width: 100vw; height: 100vh">
+        <div style="padding-top: 150px; ">
+            <img src="/images/main-icon.png" style="width: 70px; grid-area: 1 / 1 / auto / auto;top: 50%;left: 50%;transform: translate(-50%, -50%);position: absolute;">
+            <div style="width: 120px; grid-area: 1 / 1 / auto / auto; top: 50%; left: 50%; transform: translate(-50%, -50%); position: absolute;">
+                <img src="/images/spinner.svg" style="width: 120px; animation-name: spin;animation-duration: 800ms;animation-iteration-count: infinite;animation-timing-function: linear;">
+            </div>
+        </div>
+    </div>
+</MudOverlay>
+
 <MudPaper Elevation="3" Class="pa-4" Style="height: 100vh; display: flex; flex-direction: column;">
     <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
         <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
             <DataAnnotationsValidator />
-            @* <ValidationSummary/> *@
+                @* <ValidationSummary/> *@
 
             <MudGrid Spacing="2" Class="mb-1">
                 <!-- Period -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
                     </MudSelect>
                 </MudItem>
 
                 <!-- Location -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
                     </MudSelect>
                 </MudItem>
 
@@ -75,8 +87,9 @@
 
     private string postType = string.Empty;
 
-    private bool isDataLoaded = false; 
-    private bool isContentLoaded = false; 
+    private bool isDataLoaded = false;
+    private bool isContentLoaded = false;
+    private bool isLoading = false;
 
     bool success;
 
@@ -116,7 +129,7 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // TO DO: change to set by url parameter => try to parameter set of life ~ 
+        // TO DO: change to set by url parameter => try to parameter set of life ~
         // var uri = NavigationManager.ToAbsoluteUri(NavigationManager.Uri);
 
         // if (QueryHelpers.ParseQuery(uri.Query).TryGetValue("type", out var type))
@@ -128,14 +141,19 @@
         // }
 
         postType = "Promotion";
-        model.Type = "Promotion";
 
         if (PostId.HasValue)
         {
             await LoadExistingPost(PostId.Value);
-        } else {
-            model = new();
-            StateHasChanged();
+        }
+        else
+        {
+            model = new PostRequestDto()
+                {
+                    Type = postType
+                };
+
+            isDataLoaded = true;
         }
     }
 
@@ -187,6 +205,8 @@
 
         try
         {
+            isLoading = true;
+
             var editorContent = await JSRuntime.InvokeAsync<string>("getTinyMCEContent", "tinymceEditor");
 
             var (updatedContent, imageFiles) = await ProcessEditorImages(editorContent);
@@ -208,6 +228,10 @@
         catch (Exception ex)
         {
             // error message
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
