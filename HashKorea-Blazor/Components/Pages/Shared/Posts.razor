@@ -23,10 +23,15 @@
     </MudOverlay>
 } else {
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4 rz-pt-12 rz-pb-8">
-        <RadzenText TextStyle="TextStyle.H6">Total Results: @model.Count</RadzenText>
+        <RadzenText TextStyle="TextStyle.H6" Class="fw-bold fs-4 text-muted">
+            Total: <span class="text-primary fs-3">@model.Count</span>
+        </RadzenText>
         @if (User.Identity?.IsAuthenticated == true)
         {
-            <RadzenButton Icon="add" Text="Post" ButtonStyle="ButtonStyle.Primary" Click="@(() => NavigateToAddPost())" />
+            <button class="btn btn-primary d-flex align-items-center gap-2 search-button" onclick="@(() => NavigateToAddPost())">
+                <RadzenIcon Icon="Add" />
+                <span>Post</span>
+            </button>
         }
     </RadzenStack>
 
