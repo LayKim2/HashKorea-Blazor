@@ -49,24 +49,30 @@ public class SharedService : ISharedService
         return userPost != null;
     }
 
-    public async Task<ServiceResponse<List<GetPostsResponseDto>>> GetPosts(string type)
+    public async Task<ServiceResponse<List<GetPostsResponseDto>>> GetPosts(string type, string word)
     {
         var response = new ServiceResponse<List<GetPostsResponseDto>>();
 
         try
         {
-            var posts = await _context.UserPosts
-                .Where(p => p.Type == type)
+            var postsQuery = _context.UserPosts
+                                .Where(p => p.Type == type);
+
+            if (!string.IsNullOrEmpty(word))
+            {
+                // TO DO: 성능 문제
+                postsQuery = postsQuery
+                    .Where(p => p.Title.ToLower().Contains(word.ToLower()));
+            }
+
+            var posts = await postsQuery
                 .OrderByDescending(p => p.Id)
                 .Select(p => new GetPostsResponseDto
                 {
                     Id = p.Id,
-                    //Type = p.Type,
                     Title = p.Title,
                     Category = p.Category,
-                    //Content = p.Content,
-                    //UserName = p.User.Name,
-                    //CreatedDate = p.CreatedDate,
+                    //Content = p.Content
                 })
                 .ToListAsync();
 

@@ -39,11 +39,40 @@
     </div>
 
     <div class="search-input-wrapper">
-        <input type="text" class="form-control search-input" placeholder="Enter search keywords..." />
+        <input type="text" class="form-control search-input" placeholder="Enter search keywords..." @bind="SearchWord" @oninput="OnInputChange" @onkeydown="OnKeyDown" />
     </div>
 
-    <button class="btn btn-primary d-flex align-items-center gap-2 search-button">
+    <button class="btn btn-primary d-flex align-items-center gap-2 search-button" onclick="@(() => OnSearchClick())">
         <RadzenIcon Icon="search" />
         <span>Search</span>
     </button>
+
 </div>
+
+@code {
+    private string SearchWord = string.Empty;
+
+    [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
+
+    private void OnInputChange(ChangeEventArgs e)
+    {
+        SearchWord = e.Value.ToString();
+    }
+
+    private async Task OnKeyDown(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter")
+        {
+            await OnSearchClick();
+        }
+    }
+
+    private async Task OnSearchClick()
+    {
+        if (OnSearchChanged.HasDelegate)
+        {
+            await OnSearchChanged.InvokeAsync(SearchWord);
+        }
+
+    }
+}

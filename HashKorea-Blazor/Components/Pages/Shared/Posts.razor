@@ -58,8 +58,10 @@
 
     private ClaimsPrincipal? User { get; set; }
 
-    [Parameter]
-    public string Type { get; set; } = string.Empty;
+    [Parameter] public string Type { get; set; } = string.Empty;
+    [Parameter] public string SearchWord { get; set; } = string.Empty;
+
+    private string previousSearchWord = string.Empty;
 
     protected override async Task OnInitializedAsync()
     {
@@ -77,11 +79,20 @@
         }
     }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        if (SearchWord != previousSearchWord)
+        {
+            previousSearchWord = SearchWord;
+            await LoadData(); 
+        }
+    }
+
     private async Task LoadData()
     {
         isLoading = true;
 
-        var response = await SharedService.GetPosts("promotion");
+        var response = await SharedService.GetPosts("promotion", SearchWord);
         if (response.Success)
         {
             model = response.Data;

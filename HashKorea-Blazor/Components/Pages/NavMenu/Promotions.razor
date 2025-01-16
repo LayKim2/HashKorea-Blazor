@@ -5,7 +5,7 @@
 
 @rendermode InteractiveServer
 
-<HashKorea_Blazor.Components.Pages.Shared.SearchBox/>
+<HashKorea_Blazor.Components.Pages.Shared.SearchBox OnSearchChanged="HandleSearchChanged" />
 
 @* TO DO: Radzen - Pager *@
 @* TO DO: Radzen - Panel *@
@@ -13,4 +13,13 @@
 @* <MudFab Color="Color.Primary" StartIcon="@Icons.Material.Filled.Add" />
 <MudFab Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Edit" /> *@
 
-<HashKorea_Blazor.Components.Pages.Shared.Posts Type="@(POST_TYPE.PROMOTION)"></HashKorea_Blazor.Components.Pages.Shared.Posts>
+<HashKorea_Blazor.Components.Pages.Shared.Posts Type="@(POST_TYPE.PROMOTION)" SearchWord="@SearchWord"></HashKorea_Blazor.Components.Pages.Shared.Posts>
+
+@code {
+    private string SearchWord = string.Empty;
+
+    private void HandleSearchChanged(string newSearchWord)
+    {
+        SearchWord = newSearchWord;
+    }
+}
