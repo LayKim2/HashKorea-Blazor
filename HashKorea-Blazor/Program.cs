@@ -135,22 +135,9 @@ app.UseAuthorization();
 
 app.MapGet("/signin-kakao", async context =>
 {
-    var memoryService = context.RequestServices.GetRequiredService<IMemoryManagementService>();
-    var state = Guid.NewGuid().ToString();
-
-    await memoryService.GetOrSetCache(
-        key: $"AuthState:{state}",
-        getItemCallback: () => Task.FromResult(state),
-        expiration: TimeSpan.FromMinutes(5)
-    );
-
     var properties = new AuthenticationProperties
     {
         RedirectUri = "/signin-kakao-callback",
-        Items =
-        {
-            { "state", state }
-        }
     };
 
     await context.ChallengeAsync("KakaoTalk", properties);
@@ -158,7 +145,6 @@ app.MapGet("/signin-kakao", async context =>
 
 app.MapGet("/signin-kakao-callback", async context =>
 {
-    var memoryService = context.RequestServices.GetRequiredService<IMemoryManagementService>();
     var result = await context.AuthenticateAsync("KakaoTalk");
 
     if (result?.Succeeded != true)
@@ -166,20 +152,6 @@ app.MapGet("/signin-kakao-callback", async context =>
         context.Response.Redirect("/");
         return;
     }
-
-    var state = result.Properties.Items["state"];
-    var cachedState = await memoryService.GetOrSetCache<string>(
-        key: $"AuthState:{state}",
-        getItemCallback: () => Task.FromResult<string>(null) // 실패 시 null 반환
-    );
-
-    if (cachedState != state)
-    {
-        context.Response.Redirect("/detail");
-        return;
-    }
-
-    await memoryService.InvalidateCache($"AuthState:{state}");
 
     var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
