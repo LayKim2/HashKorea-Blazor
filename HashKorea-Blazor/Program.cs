@@ -147,7 +147,11 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 {
     var state = Guid.NewGuid().ToString();
 
+    Console.WriteLine($"start to sign in kakao!! and state:" + state);
+
     await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
+
+    Console.WriteLine($"start to sign in kakao!! 22");
 
     var retrievedState = await memoryService.GetAsync<string>($"AuthState:{state}");
 
@@ -191,6 +195,7 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 
 app.MapGet("/signin-kakao-callback", async context =>
 {
+    // you can see the log in aws ec2.
     Console.WriteLine($"signin-kakao-callback");
 
     var result = await context.AuthenticateAsync("KakaoTalk");
