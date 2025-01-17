@@ -15,22 +15,15 @@ public class MemoryManagementService : IMemoryManagementService
 
     public async Task SetAsync<T>(string key, T value, TimeSpan? absoluteExpiration = null)
     {
-        try
-        {
-            var options = new DistributedCacheEntryOptions();
+        var options = new DistributedCacheEntryOptions();
 
-            if (absoluteExpiration.HasValue)
-            {   
-                options.AbsoluteExpirationRelativeToNow = absoluteExpiration;
-            }
-
-            var serializedValue = JsonSerializer.Serialize(value);
-            await _cache.SetStringAsync(key, serializedValue, options);
+        if (absoluteExpiration.HasValue)
+        {   
+            options.AbsoluteExpirationRelativeToNow = absoluteExpiration;
         }
-        catch(Exception e)
-        {
 
-        }
+        var serializedValue = JsonSerializer.Serialize(value);
+        await _cache.SetStringAsync(key, serializedValue, options);
         
     }
 

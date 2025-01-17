@@ -149,6 +149,17 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 
     await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
 
+    var retrievedState = await memoryService.GetAsync<string>($"AuthState:{state}");
+
+    if (retrievedState != null)
+    {
+        Console.WriteLine($"Retrieved value: {retrievedState}");
+    }
+    else
+    {
+        Console.WriteLine("Value not found or expired.");
+    }
+
     var properties = new AuthenticationProperties
     {
         RedirectUri = "/signin-kakao-callback",
@@ -180,6 +191,8 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 
 app.MapGet("/signin-kakao-callback", async context =>
 {
+    Console.WriteLine($"signin-kakao-callback");
+
     var result = await context.AuthenticateAsync("KakaoTalk");
 
     if (result?.Succeeded != true)
@@ -187,6 +200,8 @@ app.MapGet("/signin-kakao-callback", async context =>
         context.Response.Redirect("/");
         return;
     }
+
+    Console.WriteLine($"signin-kakao-callback 2");
 
     var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
@@ -264,7 +279,7 @@ app.Lifetime.ApplicationStarted.Register(async () =>
         var valueFromRedis = await redisConnection.GetStringAsync(testKey);
         if (valueFromRedis != null)
         {
-            Console.WriteLine($"Redis에서 가져온 값: {valueFromRedis}");
+            Console.WriteLine($"value in redis: {valueFromRedis}");
         }
         else
         {
