@@ -110,9 +110,9 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
-    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.SameSite = SameSiteMode.None;
     options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; 
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
 })
 .AddKakaoTalk(options =>
 {
