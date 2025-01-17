@@ -17,8 +17,8 @@ services:
       # MSSQL
       # - ConnectionStrings__DefaultConnection=Server=hashkorea.database;Database=HashKorea;User Id=sa;Password=${SA_PASSWORD:-YourStrong@Passw0rd1};TrustServerCertificate=True;Encrypt=False;
       # REDIS
-      # - ConnectionStrings__Cache=redis:6379
-      - Cache=hashkorea-cache-4xzffu.serverless.apn2.cache.amazonaws.com:6379 
+      - Cache=hashkorea.cache:6379
+      # - Cache=hashkorea-cache-4xzffu.serverless.apn2.cache.amazonaws.com:6379
     volumes:
       # - ./init-scripts:/docker-entrypoint-initdb.d
       - ./uploads:/app/uploads
@@ -30,3 +30,9 @@ services:
     restart: always
     ports:
       - '6379:6379'
+    networks:
+      - default
+
+networks:
+  default:
+    name: hashkorea-blazor_network
