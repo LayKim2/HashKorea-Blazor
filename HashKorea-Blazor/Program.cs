@@ -220,7 +220,7 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 
     properties.Items["state"] = state;
 
-    await context.ChallengeAsync("KakaoTalk", properties);
+    await context.ChallengeAsync("KakaoTalk");
 });
 
 //app.MapGet("/signin-kakao", async context =>
