@@ -109,7 +109,13 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.Cookie.Name = ".AspNetCore.Correlation.KakaoTalk";
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS에서만 쿠키 전송
+    options.Cookie.HttpOnly = true; // JavaScript에서 쿠키 접근 불가
+    options.Cookie.SameSite = SameSiteMode.Strict; // SameSite 정책 설정
+})
 .AddKakaoTalk(options =>
 {
     // KakaoTalk OAuth 설정
@@ -183,7 +189,8 @@ if (!app.Environment.IsDevelopment())
     app.UseHsts();
 }
 
-app.UseHttpsRedirection();
+// TO DO: when you use https
+//app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
