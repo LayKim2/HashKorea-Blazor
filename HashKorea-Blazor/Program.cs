@@ -83,7 +83,8 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 // Redis
 builder.Services.AddStackExchangeRedisCache(option =>
-    option.Configuration = "hashkorea-cache-4xzffu.serverless.apn2.cache.amazonaws.com:6379");
+    option.Configuration = Environment.GetEnvironmentVariable("Cache"));
+    //option.Configuration = "hashkorea-cache-4xzffu.serverless.apn2.cache.amazonaws.com:6379");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
