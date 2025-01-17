@@ -10,6 +10,7 @@ using HashKorea.DTOs.Auth;
 using System.Security.Claims;
 using HashKorea.Common.Constants;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.AspNetCore.Authentication.OAuth;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -108,12 +109,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie(options =>
-{
-    options.Cookie.SameSite = SameSiteMode.None;
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None;
-})
+.AddCookie()
 .AddKakaoTalk(options =>
 {
     options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
@@ -122,6 +118,47 @@ builder.Services.AddAuthentication(options =>
     var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
     var uri = new Uri(redirectUri);
     options.CallbackPath = new PathString(uri.AbsolutePath);
+
+    options.Events = new OAuthEvents
+    {
+        OnRedirectToAuthorizationEndpoint = context =>
+        {
+            // state를 로그에 출력
+            if (context.Properties.Items.TryGetValue("state", out var state))
+            {
+                Console.WriteLine($"[DEBUG] Redirecting to Kakao. Generated state: {state}");
+            }
+            else
+            {
+                Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
+            }
+
+            return Task.CompletedTask;
+        },
+        OnRemoteFailure = context =>
+        {
+            Console.WriteLine($"[ERROR] Remote failure occurred: {context.Failure?.Message}");
+            return Task.CompletedTask;
+        },
+        OnTicketReceived = context =>
+        {
+            Console.WriteLine("[DEBUG] Authentication successful. Ticket received.");
+            return Task.CompletedTask;
+        },
+        OnCreatingTicket = context =>
+        {
+            if (context.Properties.Items.TryGetValue("state", out var state))
+            {
+                Console.WriteLine($"[DEBUG] Creating ticket. State from callback: {state}");
+            }
+            else
+            {
+                Console.WriteLine("[DEBUG] Creating ticket. No state found in callback.");
+            }
+
+            return Task.CompletedTask;
+        }
+    };
 });
 
 
