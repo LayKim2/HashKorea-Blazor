@@ -111,10 +111,10 @@ builder.Services.AddAuthentication(options =>
 })
 .AddCookie(options =>
 {
+    options.Cookie.Domain = "13.209.15.69";
     options.Cookie.Name = ".AspNetCore.Correlation.KakaoTalk";
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always; // HTTPS에서만 쿠키 전송
-    options.Cookie.HttpOnly = true; // JavaScript에서 쿠키 접근 불가
-    options.Cookie.SameSite = SameSiteMode.Strict; // SameSite 정책 설정
+    options.Cookie.HttpOnly = true; 
+    options.Cookie.SameSite = SameSiteMode.Lax;
 })
 .AddKakaoTalk(options =>
 {
