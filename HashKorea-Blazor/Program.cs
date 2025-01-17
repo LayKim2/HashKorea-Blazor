@@ -108,7 +108,12 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax;
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; 
+})
 .AddKakaoTalk(options =>
 {
     options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
