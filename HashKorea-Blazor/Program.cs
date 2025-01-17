@@ -190,7 +190,7 @@ app.UseAuthorization();
 
 app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService memoryService) =>
 {
-    var state = Guid.NewGuid().ToString();
+    var state = Guid.NewGuid().ToString("N");
 
     Console.WriteLine($"start to sign in kakao!! and state:" + state);
 
@@ -217,6 +217,8 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
         //    { "state", state }
         //}
     };
+
+    properties.Items["state"] = state;
 
     await context.ChallengeAsync("KakaoTalk", properties);
 });
