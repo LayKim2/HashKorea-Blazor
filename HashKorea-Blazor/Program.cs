@@ -135,6 +135,8 @@ builder.Services.AddAuthentication(options =>
                 Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
             }
 
+            Console.WriteLine($"[DEBUG] context.RedirectUri: {context.RedirectUri}");
+
             // 리디렉션 실행
             context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
