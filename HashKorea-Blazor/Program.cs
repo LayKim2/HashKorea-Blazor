@@ -112,6 +112,7 @@ builder.Services.AddAuthentication(options =>
 .AddCookie()
 .AddKakaoTalk(options =>
 {
+    // KakaoTalk OAuth 설정
     options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
     options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
 
@@ -119,11 +120,12 @@ builder.Services.AddAuthentication(options =>
     var uri = new Uri(redirectUri);
     options.CallbackPath = new PathString(uri.AbsolutePath);
 
+    // OAuth 디버깅을 위한 이벤트 설정
     options.Events = new OAuthEvents
     {
         OnRedirectToAuthorizationEndpoint = context =>
         {
-            // state를 로그에 출력
+            // 리디렉션 전에 state 로그 출력
             if (context.Properties.Items.TryGetValue("state", out var state))
             {
                 Console.WriteLine($"[DEBUG] Redirecting to Kakao. Generated state: {state}");
@@ -133,20 +135,19 @@ builder.Services.AddAuthentication(options =>
                 Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
             }
 
+            // 리디렉션 실행
+            context.Response.Redirect(context.RedirectUri);
             return Task.CompletedTask;
         },
         OnRemoteFailure = context =>
         {
+            // 인증 실패 로그
             Console.WriteLine($"[ERROR] Remote failure occurred: {context.Failure?.Message}");
-            return Task.CompletedTask;
-        },
-        OnTicketReceived = context =>
-        {
-            Console.WriteLine("[DEBUG] Authentication successful. Ticket received.");
             return Task.CompletedTask;
         },
         OnCreatingTicket = context =>
         {
+            // 콜백에서 state 확인
             if (context.Properties.Items.TryGetValue("state", out var state))
             {
                 Console.WriteLine($"[DEBUG] Creating ticket. State from callback: {state}");
@@ -209,10 +210,10 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
     var properties = new AuthenticationProperties
     {
         RedirectUri = "/signin-kakao-callback",
-        Items =
-        {
-            { "state", state }
-        }
+        //Items =
+        //{
+        //    { "state", state }
+        //}
     };
 
     await context.ChallengeAsync("KakaoTalk", properties);
