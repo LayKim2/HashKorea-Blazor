@@ -9,6 +9,7 @@ using HashKorea.Services;
 using HashKorea.DTOs.Auth;
 using System.Security.Claims;
 using HashKorea.Common.Constants;
+using Microsoft.Extensions.Caching.Distributed;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -44,13 +45,13 @@ builder.Services.AddMudServices();
 //    options.Cookie.IsEssential = true;
 //});
 
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
-});
+//builder.Services.AddSession(options =>
+//{
+//    options.IdleTimeout = TimeSpan.FromMinutes(30);
+//    options.Cookie.HttpOnly = true;
+//    options.Cookie.IsEssential = true;
+//    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+//});
 
 // radzen blazor
 //builder.Services.AddRadzenComponents();
@@ -82,9 +83,7 @@ builder.Services.AddDbContext<DataContext>(options =>
 
 // Redis
 builder.Services.AddStackExchangeRedisCache(option =>
-    //option.Configuration = "hashkorea-redis.cluster-cfg.ap-northeast-2.cache.amazonaws.com:6379"
-    option.Configuration = builder.Configuration.GetConnectionString("Cache")
-);
+    option.Configuration = "hashkorea-cache-4xzffu.serverless.apn2.cache.amazonaws.com:6379");
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
@@ -122,7 +121,7 @@ builder.Services.AddAuthentication(options =>
 
 var app = builder.Build();
 
-app.UseSession();
+//app.UseSession();
 
 DatabaseManagementService.MigrationInitialisation(app);
 
@@ -143,15 +142,40 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/signin-kakao", async context =>
+app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService memoryService) =>
 {
+    var state = Guid.NewGuid().ToString();
+
+    await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
+
     var properties = new AuthenticationProperties
     {
         RedirectUri = "/signin-kakao-callback",
+        Items =
+        {
+            { "state", state }
+        }
     };
 
     await context.ChallengeAsync("KakaoTalk", properties);
 });
+
+//app.MapGet("/signin-kakao", async context =>
+//{
+//    var state = Guid.NewGuid().ToString();
+//    context.Session.SetString("AuthState", state);
+
+//    var properties = new AuthenticationProperties
+//    {
+//        RedirectUri = "/signin-kakao-callback",
+//        Items =
+//        {
+//            { "state", state }
+//        }
+//    };
+
+//    await context.ChallengeAsync("KakaoTalk", properties);
+//});
 
 app.MapGet("/signin-kakao-callback", async context =>
 {
@@ -210,6 +234,7 @@ app.MapGet("/signin-kakao-callback", async context =>
 app.MapGet("/signout", async context =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    //context.Session.Clear();
     context.Response.Redirect("/");
 });
 
@@ -225,86 +250,27 @@ app.MapRazorComponents<App>()
 //    pattern: "{controller=Home}/{action=Index}/{id?}")
 //    .WithStaticAssets();
 
+app.Lifetime.ApplicationStarted.Register(async () =>
+{
+    using (var scope = app.Services.CreateScope())
+    {
+        var redisConnection = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
+        var testKey = "testConnection";
+        var testValue = "Redis is working!";
+
+        await redisConnection.SetStringAsync(testKey, testValue);
+
+        var valueFromRedis = await redisConnection.GetStringAsync(testKey);
+        if (valueFromRedis != null)
+        {
+            Console.WriteLine($"Redis에서 가져온 값: {valueFromRedis}");
+        }
+        else
+        {
+            Console.WriteLine("Redis에서 값을 가져올 수 없습니다.");
+        }
+    }
+});
+
+
 app.Run();
-
-
-
-// use session, not redis
-//app.MapGet("/signin-kakao", async context =>
-//{
-//    var state = Guid.NewGuid().ToString();
-//    context.Session.SetString("AuthState", state);
-
-//    var properties = new AuthenticationProperties
-//    {
-//        RedirectUri = "/signin-kakao-callback",
-//        Items =
-//        {
-//            { "state", state }
-//        }
-//    };
-
-//    await context.ChallengeAsync("KakaoTalk", properties);
-//});
-
-//app.MapGet("/signin-kakao-callback", async context =>
-//{
-//    var result = await context.AuthenticateAsync("KakaoTalk");
-
-//    if (result?.Succeeded != true ||
-//        result.Properties.Items["state"] != context.Session.GetString("AuthState"))
-//    {
-//        context.Response.Redirect("/");
-//        return;
-//    }
-
-//    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-//    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
-//    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
-
-//    if (string.IsNullOrEmpty(kakaoId))
-//    {
-//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//        context.Response.Redirect("/");
-//        return;
-//    }
-
-//    using var scope = app.Services.CreateScope();
-//    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-
-//    var model = new IsCompletedRequestDto
-//    {
-//        Id = kakaoId,
-//        SignInType = USER_AUTH.KAKAO,
-//        Name = name ?? string.Empty,
-//        Email = email ?? string.Empty
-//    };
-
-//    var isCompletedResponse = await authService.IsCompleted(model);
-//    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
-//    {
-//        var claims = new List<Claim>
-//        {
-//            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
-//            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
-//        };
-
-//        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
-//        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-
-//        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-//    }
-//    else
-//    {
-//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//    }
-
-//    context.Response.Redirect("/");
-//});
-
-//app.MapGet("/signout", async context =>
-//{
-//    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//    context.Session.Clear();
-//    context.Response.Redirect("/");
-//});

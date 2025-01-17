@@ -2,6 +2,6 @@
 
 public interface IMemoryManagementService
 {
-    Task InvalidateCache(string key);
-    Task<T> GetOrSetCache<T>(string key, Func<Task<T>> getItemCallback, TimeSpan? expiration = null);
+    Task SetAsync<T>(string key, T value, TimeSpan? absoluteExpiration = null);
+    Task<T?> GetAsync<T>(string key);
 }

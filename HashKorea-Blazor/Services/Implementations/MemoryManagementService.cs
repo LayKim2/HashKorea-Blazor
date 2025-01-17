@@ -1,43 +1,48 @@
-﻿using Microsoft.Extensions.Caching.Distributed;
+﻿using Amazon.Runtime.Internal.Util;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Text.Json;
 
 namespace HashKorea.Services;
 
 public class MemoryManagementService : IMemoryManagementService
 {
-    private readonly IDistributedCache _distributedCache;
-    private readonly ILogger<MemoryManagementService> _logger;
+    private readonly IDistributedCache _cache;
 
-    public MemoryManagementService(IDistributedCache distributedCache, ILogger<MemoryManagementService> logger)
+    public MemoryManagementService(IDistributedCache cache)
     {
-        _distributedCache = distributedCache;
-        _logger = logger;
+        _cache = cache;
     }
 
-    public async Task<T> GetOrSetCache<T>(string key, Func<Task<T>> getItemCallback, TimeSpan? expiration = null)
+    public async Task SetAsync<T>(string key, T value, TimeSpan? absoluteExpiration = null)
     {
-        var cachedValue = await _distributedCache.GetStringAsync(key);
-
-        if (cachedValue != null)
+        try
         {
-            return JsonSerializer.Deserialize<T>(cachedValue);
+            var options = new DistributedCacheEntryOptions();
+
+            if (absoluteExpiration.HasValue)
+            {   
+                options.AbsoluteExpirationRelativeToNow = absoluteExpiration;
+            }
+
+            var serializedValue = JsonSerializer.Serialize(value);
+            await _cache.SetStringAsync(key, serializedValue, options);
+        }
+        catch(Exception e)
+        {
+
+        }
+        
+    }
+
+    public async Task<T?> GetAsync<T>(string key)
+    {
+        var serializedValue = await _cache.GetStringAsync(key);
+
+        if (string.IsNullOrEmpty(serializedValue))
+        {
+            return default;
         }
 
-        var item = await getItemCallback();
-
-        var options = new DistributedCacheEntryOptions
-        {
-            AbsoluteExpirationRelativeToNow = expiration ?? TimeSpan.FromMinutes(10)
-        };
-
-        await _distributedCache.SetStringAsync(key, JsonSerializer.Serialize(item), options);
-
-        return item;
-    }
-
-    // ActorImage.IsMianImage 가 바뀔때마다 호출해서 cache를 지운다.
-    public async Task InvalidateCache(string key)
-    {
-        await _distributedCache.RemoveAsync(key);
+        return JsonSerializer.Deserialize<T>(serializedValue);
     }
 }
