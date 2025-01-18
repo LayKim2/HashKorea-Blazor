@@ -109,7 +109,14 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie()
+.AddCookie(options =>
+{
+    // HTTP에서는 Secure를 제거하고, SameSite를 'Lax' 또는 'None'으로 설정
+    options.Cookie.HttpOnly = true;
+    options.Cookie.SameSite = SameSiteMode.Lax;  // SameSiteMode.None으로 변경해도 될 수 있음
+    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Secure 쿠키 비활성화 (HTTP에서만)
+    options.Cookie.Name = ".AspNetCore.Cookies"; // 쿠키 이름 (기본 값 사용 가능)
+})
 .AddKakaoTalk(options =>
 {
     // KakaoTalk OAuth 설정
