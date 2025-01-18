@@ -56,7 +56,8 @@
     private void KakaoLogin()
     {
         // forceLoad: redirect
-        NavigationManager.NavigateTo("/signin-kakao", forceLoad: true);
+        NavigationManager.NavigateTo("/api/auth/signin/kakao", forceLoad: true);
+        // await JSRuntime.InvokeVoidAsync("openNewWindow", "/api/auth/signin/kakao");
     }
 
 }

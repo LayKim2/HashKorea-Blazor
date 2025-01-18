@@ -25,7 +25,7 @@ builder.AddServiceDefaults();
 builder.Services.AddHttpContextAccessor();
 
 // when you use like MVC pattern (controller)
-//builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<ISharedService, SharedService>();
 builder.Services.AddScoped<ILogService, LogService>();
@@ -38,13 +38,13 @@ builder.Services.AddMudServices();
 
 // set session
 // 1. auth login for kakao -> set session for auth
-//builder.Services.AddDistributedMemoryCache();
-//builder.Services.AddSession(options =>
-//{
-//    options.IdleTimeout = TimeSpan.FromMinutes(30);
-//    options.Cookie.HttpOnly = true;
-//    options.Cookie.IsEssential = true;
-//});
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 //builder.Services.AddSession(options =>
 //{
@@ -109,13 +109,7 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie(options =>
-{
-    options.Cookie.Domain = "13.209.15.69";
-    options.Cookie.Name = ".AspNetCore.Correlation.KakaoTalk";
-    options.Cookie.HttpOnly = true; 
-    options.Cookie.SameSite = SameSiteMode.Lax;
-})
+.AddCookie()
 .AddKakaoTalk(options =>
 {
     // KakaoTalk OAuth 설정
@@ -127,53 +121,54 @@ builder.Services.AddAuthentication(options =>
     options.CallbackPath = new PathString(uri.AbsolutePath);
 
     // OAuth 디버깅을 위한 이벤트 설정
-    options.Events = new OAuthEvents
-    {
-        OnRedirectToAuthorizationEndpoint = context =>
-        {
-            // 리디렉션 전에 state 로그 출력
-            if (context.Properties.Items.TryGetValue("state", out var state))
-            {
-                Console.WriteLine($"[DEBUG] Redirecting to Kakao. Generated state: {state}");
-            }
-            else
-            {
-                Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
-            }
+    //options.Events = new OAuthEvents
+    //{
+    //    OnRedirectToAuthorizationEndpoint = context =>
+    //    {
+    //        // 리디렉션 전에 state 로그 출력
+    //        if (context.Properties.Items.TryGetValue("state", out var state))
+    //        {
+    //            Console.WriteLine($"[DEBUG] Redirecting to Kakao. Generated state: {state}");
+    //        }
+    //        else
+    //        {
+    //            Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
+    //        }
 
-            Console.WriteLine($"[DEBUG] context.RedirectUri: {context.RedirectUri}");
+    //        Console.WriteLine($"[DEBUG] context.RedirectUri: {context.RedirectUri}");
 
-            // 리디렉션 실행
-            context.Response.Redirect(context.RedirectUri);
-            return Task.CompletedTask;
-        },
-        OnRemoteFailure = context =>
-        {
-            // 인증 실패 로그
-            Console.WriteLine($"[ERROR] Remote failure occurred: {context.Failure?.Message}");
-            return Task.CompletedTask;
-        },
-        OnCreatingTicket = context =>
-        {
-            // 콜백에서 state 확인
-            if (context.Properties.Items.TryGetValue("state", out var state))
-            {
-                Console.WriteLine($"[DEBUG] Creating ticket. State from callback: {state}");
-            }
-            else
-            {
-                Console.WriteLine("[DEBUG] Creating ticket. No state found in callback.");
-            }
+    //        // 리디렉션 실행
+    //        context.Response.Redirect(context.RedirectUri);
+    //        return Task.CompletedTask;
+    //    },
+    //    OnRemoteFailure = context =>
+    //    {
+    //        // 인증 실패 로그
+    //        Console.WriteLine($"[ERROR] Remote failure occurred: {context.Failure?.Message}");
+    //        return Task.CompletedTask;
+    //    },
+    //    OnCreatingTicket = context =>
+    //    {
+    //        // 콜백에서 state 확인
+    //        if (context.Properties.Items.TryGetValue("state", out var state))
+    //        {
+    //            Console.WriteLine($"[DEBUG] Creating ticket. State from callback: {state}");
+    //        }
+    //        else
+    //        {
+    //            Console.WriteLine("[DEBUG] Creating ticket. No state found in callback.");
+    //        }
 
-            return Task.CompletedTask;
-        }
-    };
+    //        return Task.CompletedTask;
+    //    }
+    //};
 });
 
+builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-//app.UseSession();
+app.UseSession();
 
 DatabaseManagementService.MigrationInitialisation(app);
 
@@ -195,40 +190,40 @@ if (!app.Environment.IsDevelopment())
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService memoryService) =>
-{
-    var state = Guid.NewGuid().ToString("N");
+//app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService memoryService) =>
+//{
+//    var state = Guid.NewGuid().ToString("N");
 
-    Console.WriteLine($"start to sign in kakao!! and state:" + state);
+//    Console.WriteLine($"start to sign in kakao!! and state:" + state);
 
-    await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
+//    await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
 
-    Console.WriteLine($"start to sign in kakao!! 22");
+//    Console.WriteLine($"start to sign in kakao!! 22");
 
-    var retrievedState = await memoryService.GetAsync<string>($"AuthState:{state}");
+//    var retrievedState = await memoryService.GetAsync<string>($"AuthState:{state}");
 
-    if (retrievedState != null)
-    {
-        Console.WriteLine($"Retrieved value: {retrievedState}");
-    }
-    else
-    {
-        Console.WriteLine("Value not found or expired.");
-    }
+//    if (retrievedState != null)
+//    {
+//        Console.WriteLine($"Retrieved value: {retrievedState}");
+//    }
+//    else
+//    {
+//        Console.WriteLine("Value not found or expired.");
+//    }
 
-    var properties = new AuthenticationProperties
-    {
-        RedirectUri = "/signin-kakao-callback",
-        //Items =
-        //{
-        //    { "state", state }
-        //}
-    };
+//    var properties = new AuthenticationProperties
+//    {
+//        RedirectUri = "/signin-kakao-callback",
+//        //Items =
+//        //{
+//        //    { "state", state }
+//        //}
+//    };
 
-    properties.Items["state"] = state;
+//    properties.Items["state"] = state;
 
-    await context.ChallengeAsync("KakaoTalk");
-});
+//    await context.ChallengeAsync("KakaoTalk");
+//});
 
 //app.MapGet("/signin-kakao", async context =>
 //{
@@ -247,64 +242,64 @@ app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService
 //    await context.ChallengeAsync("KakaoTalk", properties);
 //});
 
-app.MapGet("/signin-kakao-callback", async context =>
-{
-    // you can see the log in aws ec2.
-    Console.WriteLine($"signin-kakao-callback");
+//app.MapGet("/signin-kakao-callback", async context =>
+//{
+//    // you can see the log in aws ec2.
+//    Console.WriteLine($"signin-kakao-callback");
 
-    var result = await context.AuthenticateAsync("KakaoTalk");
+//    var result = await context.AuthenticateAsync("KakaoTalk");
 
-    if (result?.Succeeded != true)
-    {
-        context.Response.Redirect("/");
-        return;
-    }
+//    if (result?.Succeeded != true)
+//    {
+//        context.Response.Redirect("/");
+//        return;
+//    }
 
-    Console.WriteLine($"signin-kakao-callback 2");
+//    Console.WriteLine($"signin-kakao-callback 2");
 
-    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
-    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+//    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+//    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+//    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
 
-    if (string.IsNullOrEmpty(kakaoId))
-    {
-        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-        context.Response.Redirect("/");
-        return;
-    }
+//    if (string.IsNullOrEmpty(kakaoId))
+//    {
+//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+//        context.Response.Redirect("/");
+//        return;
+//    }
 
-    using var scope = app.Services.CreateScope();
-    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+//    using var scope = app.Services.CreateScope();
+//    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
 
-    var model = new IsCompletedRequestDto
-    {
-        Id = kakaoId,
-        SignInType = USER_AUTH.KAKAO,
-        Name = name ?? string.Empty,
-        Email = email ?? string.Empty
-    };
+//    var model = new IsCompletedRequestDto
+//    {
+//        Id = kakaoId,
+//        SignInType = USER_AUTH.KAKAO,
+//        Name = name ?? string.Empty,
+//        Email = email ?? string.Empty
+//    };
 
-    var isCompletedResponse = await authService.IsCompleted(model);
-    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
-    {
-        var claims = new List<Claim>
-        {
-            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
-            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
-        };
+//    var isCompletedResponse = await authService.IsCompleted(model);
+//    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
+//    {
+//        var claims = new List<Claim>
+//        {
+//            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
+//            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
+//        };
 
-        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
-        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+//        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
+//        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-    }
-    else
-    {
-        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    }
+//        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+//    }
+//    else
+//    {
+//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+//    }
 
-    context.Response.Redirect("/");
-});
+//    context.Response.Redirect("/");
+//});
 
 app.MapGet("/signout", async context =>
 {
@@ -320,10 +315,10 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // when you use controller (for access to api url )
-//app.MapControllerRoute(
-//    name: "default",
-//    pattern: "{controller=Home}/{action=Index}/{id?}")
-//    .WithStaticAssets();
+app.MapControllerRoute(
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}")
+    .WithStaticAssets();
 
 app.Lifetime.ApplicationStarted.Register(async () =>
 {
