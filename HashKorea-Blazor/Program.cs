@@ -4,13 +4,7 @@ using HashKorea_Blazor.Components;
 using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Microsoft.AspNetCore.Authentication.Cookies;
-using Microsoft.AspNetCore.Authentication;
 using HashKorea.Services;
-using HashKorea.DTOs.Auth;
-using System.Security.Claims;
-using HashKorea.Common.Constants;
-using Microsoft.Extensions.Caching.Distributed;
-using Microsoft.AspNetCore.Authentication.OAuth;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -38,20 +32,12 @@ builder.Services.AddMudServices();
 
 // set session
 // 1. auth login for kakao -> set session for auth
-builder.Services.AddDistributedMemoryCache();
-builder.Services.AddSession(options =>
-{
-    options.IdleTimeout = TimeSpan.FromMinutes(30);
-    options.Cookie.HttpOnly = true;
-    options.Cookie.IsEssential = true;
-});
-
+//builder.Services.AddDistributedMemoryCache();
 //builder.Services.AddSession(options =>
 //{
 //    options.IdleTimeout = TimeSpan.FromMinutes(30);
 //    options.Cookie.HttpOnly = true;
 //    options.Cookie.IsEssential = true;
-//    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
 //});
 
 // radzen blazor
@@ -82,11 +68,6 @@ builder.Services.AddDbContext<DataContext>(options =>
     options.UseMySql(connectionString, ServerVersion.AutoDetect(connectionString));
 });
 
-// Redis
-builder.Services.AddStackExchangeRedisCache(option =>
-    //option.Configuration = Environment.GetEnvironmentVariable("Cache"));
-    option.Configuration = "hashkorea.cache:6379");
-
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -109,73 +90,22 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
 })
-.AddCookie(options =>
-{
-    // HTTP에서는 Secure를 제거하고, SameSite를 'Lax' 또는 'None'으로 설정
-    options.Cookie.HttpOnly = true;
-    options.Cookie.SameSite = SameSiteMode.Lax;  // SameSiteMode.None으로 변경해도 될 수 있음
-    options.Cookie.SecurePolicy = CookieSecurePolicy.None; // Secure 쿠키 비활성화 (HTTP에서만)
-    options.Cookie.Name = ".AspNetCore.Cookies"; // 쿠키 이름 (기본 값 사용 가능)
-})
+.AddCookie()
 .AddKakaoTalk(options =>
 {
-    // KakaoTalk OAuth 설정
     options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
     options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
 
     var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
     var uri = new Uri(redirectUri);
     options.CallbackPath = new PathString(uri.AbsolutePath);
-
-    // OAuth 디버깅을 위한 이벤트 설정
-    //options.Events = new OAuthEvents
-    //{
-    //    OnRedirectToAuthorizationEndpoint = context =>
-    //    {
-    //        // 리디렉션 전에 state 로그 출력
-    //        if (context.Properties.Items.TryGetValue("state", out var state))
-    //        {
-    //            Console.WriteLine($"[DEBUG] Redirecting to Kakao. Generated state: {state}");
-    //        }
-    //        else
-    //        {
-    //            Console.WriteLine("[DEBUG] Redirecting to Kakao. No state found in context properties.");
-    //        }
-
-    //        Console.WriteLine($"[DEBUG] context.RedirectUri: {context.RedirectUri}");
-
-    //        // 리디렉션 실행
-    //        context.Response.Redirect(context.RedirectUri);
-    //        return Task.CompletedTask;
-    //    },
-    //    OnRemoteFailure = context =>
-    //    {
-    //        // 인증 실패 로그
-    //        Console.WriteLine($"[ERROR] Remote failure occurred: {context.Failure?.Message}");
-    //        return Task.CompletedTask;
-    //    },
-    //    OnCreatingTicket = context =>
-    //    {
-    //        // 콜백에서 state 확인
-    //        if (context.Properties.Items.TryGetValue("state", out var state))
-    //        {
-    //            Console.WriteLine($"[DEBUG] Creating ticket. State from callback: {state}");
-    //        }
-    //        else
-    //        {
-    //            Console.WriteLine("[DEBUG] Creating ticket. No state found in callback.");
-    //        }
-
-    //        return Task.CompletedTask;
-    //    }
-    //};
 });
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.UseSession();
+//app.UseSession();
 
 DatabaseManagementService.MigrationInitialisation(app);
 
@@ -308,12 +238,12 @@ app.UseAuthorization();
 //    context.Response.Redirect("/");
 //});
 
-app.MapGet("/signout", async context =>
-{
-    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-    //context.Session.Clear();
-    context.Response.Redirect("/");
-});
+//app.MapGet("/signout", async context =>
+//{
+//    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+//    context.Session.Clear();
+//    context.Response.Redirect("/");
+//});
 
 app.UseAntiforgery();
 
@@ -327,27 +257,28 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
 
-app.Lifetime.ApplicationStarted.Register(async () =>
-{
-    using (var scope = app.Services.CreateScope())
-    {
-        var redisConnection = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
-        var testKey = "testConnection";
-        var testValue = "Redis is working!";
+// REDIS TEST
+//app.Lifetime.ApplicationStarted.Register(async () =>
+//{
+//    using (var scope = app.Services.CreateScope())
+//    {
+//        var redisConnection = scope.ServiceProvider.GetRequiredService<IDistributedCache>();
+//        var testKey = "testConnection";
+//        var testValue = "Redis is working!";
 
-        await redisConnection.SetStringAsync(testKey, testValue);
+//        await redisConnection.SetStringAsync(testKey, testValue);
 
-        var valueFromRedis = await redisConnection.GetStringAsync(testKey);
-        if (valueFromRedis != null)
-        {
-            Console.WriteLine($"value in redis: {valueFromRedis}");
-        }
-        else
-        {
-            Console.WriteLine("Redis에서 값을 가져올 수 없습니다.");
-        }
-    }
-});
+//        var valueFromRedis = await redisConnection.GetStringAsync(testKey);
+//        if (valueFromRedis != null)
+//        {
+//            Console.WriteLine($"value in redis: {valueFromRedis}");
+//        }
+//        else
+//        {
+//            Console.WriteLine("Redis에서 값을 가져올 수 없습니다.");
+//        }
+//    }
+//});
 
 
 app.Run();
