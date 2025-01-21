@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 using Radzen;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using HashKorea.Services;
+using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.Components.Server;
+using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.AspNetCore.Authentication;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -86,24 +90,59 @@ builder.Services.AddServerSideBlazor()
 // get image of base64 or byte file( you can`t get base64 string from js if you don`t have this one) - end
 
 
-builder.Services.AddAuthentication(options =>
-{
-    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-})
-.AddCookie()
-.AddKakaoTalk(options =>
-{
-    options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
-    options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
+//builder.Services.AddAuthentication(options =>
+//{
+//    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+//})
+//.AddCookie()
+//.AddKakaoTalk(options =>
+//{
+//    options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
+//    options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
 
-    var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
-    var uri = new Uri(redirectUri);
-    options.CallbackPath = new PathString(uri.AbsolutePath);
-});
+//    var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
+//    var uri = new Uri(redirectUri);
+//    options.CallbackPath = new PathString(uri.AbsolutePath);
+//});
+
+builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
+builder.Services.AddAuthentication(AppConstants.AuthScheme)
+    .AddCookie(AppConstants.AuthScheme, cookieOptions =>
+    {
+        cookieOptions.Cookie.Name = AppConstants.AuthScheme;
+    })
+    .AddGoogle(GoogleDefaults.AuthenticationScheme, googleOptions =>
+    {
+        googleOptions.ClientId = "94605561544-md5tee3juotjinm66p7qtgo8ubqts5jj.apps.googleusercontent.com";
+        googleOptions.ClientSecret = "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";
+        googleOptions.AccessDeniedPath = "/access-denied";
+        googleOptions.SignInScheme = AppConstants.AuthScheme;
+        googleOptions.CallbackPath = new PathString("/signin-google");  // 리디렉션 경로
+    });
 
 builder.Services.AddAuthorization();
 
 var app = builder.Build();
+
+app.Use(async (context, next) =>
+{
+    // /login 경로로 접근하면 OAuth 인증을 시작
+    if (context.Request.Path.StartsWithSegments("/login"))
+    {
+        var authProperties = new AuthenticationProperties
+        {
+            RedirectUri = "/after-login"  // 인증 성공 후 리디렉션할 경로
+        };
+
+        // 인증 요청을 트리거합니다.
+        await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
+
+        return;  // 인증 요청을 시작한 후 더 이상 요청을 처리하지 않음
+    }
+
+    await next();  // 그 외의 경로는 계속해서 처리
+});
 
 //app.UseSession();
 
