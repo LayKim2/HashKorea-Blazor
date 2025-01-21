@@ -119,38 +119,26 @@ builder.Services.AddAuthentication(AppConstants.AuthScheme)
         googleOptions.AccessDeniedPath = "/access-denied";
         googleOptions.SignInScheme = AppConstants.AuthScheme;
         googleOptions.CallbackPath = new PathString("/signin-google");  // 리디렉션 경로
+    })
+    .AddKakaoTalk("Kakao", kakaoOptions =>
+    {
+        kakaoOptions.ClientId = "b4f436e21e363b5faef09df87c109967";  // 카카오 REST API 키
+        kakaoOptions.ClientSecret = "3T3tFIBHzC9MsvhbpKPXcCmuTkJum55m";  // 선택 사항
+        kakaoOptions.CallbackPath = new PathString("/signin-kakao");  // 리디렉션 경로
+        kakaoOptions.AuthorizationEndpoint = "https://kauth.kakao.com/oauth/authorize";
+        kakaoOptions.TokenEndpoint = "https://kauth.kakao.com/oauth/token";
+        kakaoOptions.UserInformationEndpoint = "https://kapi.kakao.com/v2/user/me";
+
+        kakaoOptions.SaveTokens = true;
+
     });
 
-builder.Services.AddAuthorization();
 
 var app = builder.Build();
 
-app.Use(async (context, next) =>
-{
-    // /login 경로로 접근하면 OAuth 인증을 시작
-    if (context.Request.Path.StartsWithSegments("/login"))
-    {
-        var authProperties = new AuthenticationProperties
-        {
-            RedirectUri = "/after-login"  // 인증 성공 후 리디렉션할 경로
-        };
 
-        // 인증 요청을 트리거합니다.
-        await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
-
-        return;  // 인증 요청을 시작한 후 더 이상 요청을 처리하지 않음
-    }
-
-    await next();  // 그 외의 경로는 계속해서 처리
-});
 
 //app.UseSession();
-
-DatabaseManagementService.MigrationInitialisation(app);
-
-app.MapDefaultEndpoints();
-
-
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -161,128 +149,33 @@ if (!app.Environment.IsDevelopment())
 }
 
 // TO DO: when you use https
-//app.UseHttpsRedirection();
+app.UseHttpsRedirection();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
-//app.MapGet("/signin-kakao", async (HttpContext context, IMemoryManagementService memoryService) =>
-//{
-//    var state = Guid.NewGuid().ToString("N");
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path.StartsWithSegments("/login"))
+    {
+        var authProperties = new AuthenticationProperties
+        {
+            RedirectUri = "/after-login"
+        };
 
-//    Console.WriteLine($"start to sign in kakao!! and state:" + state);
+        //await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
+        await context.ChallengeAsync("Kakao", authProperties);
 
-//    await memoryService.SetAsync($"AuthState:{state}", state, TimeSpan.FromMinutes(5));
 
-//    Console.WriteLine($"start to sign in kakao!! 22");
+        return;
+    }
 
-//    var retrievedState = await memoryService.GetAsync<string>($"AuthState:{state}");
+    await next();
+});
 
-//    if (retrievedState != null)
-//    {
-//        Console.WriteLine($"Retrieved value: {retrievedState}");
-//    }
-//    else
-//    {
-//        Console.WriteLine("Value not found or expired.");
-//    }
+DatabaseManagementService.MigrationInitialisation(app);
 
-//    var properties = new AuthenticationProperties
-//    {
-//        RedirectUri = "/signin-kakao-callback",
-//        //Items =
-//        //{
-//        //    { "state", state }
-//        //}
-//    };
-
-//    properties.Items["state"] = state;
-
-//    await context.ChallengeAsync("KakaoTalk");
-//});
-
-//app.MapGet("/signin-kakao", async context =>
-//{
-//    var state = Guid.NewGuid().ToString();
-//    context.Session.SetString("AuthState", state);
-
-//    var properties = new AuthenticationProperties
-//    {
-//        RedirectUri = "/signin-kakao-callback",
-//        Items =
-//        {
-//            { "state", state }
-//        }
-//    };
-
-//    await context.ChallengeAsync("KakaoTalk", properties);
-//});
-
-//app.MapGet("/signin-kakao-callback", async context =>
-//{
-//    // you can see the log in aws ec2.
-//    Console.WriteLine($"signin-kakao-callback");
-
-//    var result = await context.AuthenticateAsync("KakaoTalk");
-
-//    if (result?.Succeeded != true)
-//    {
-//        context.Response.Redirect("/");
-//        return;
-//    }
-
-//    Console.WriteLine($"signin-kakao-callback 2");
-
-//    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-//    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
-//    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
-
-//    if (string.IsNullOrEmpty(kakaoId))
-//    {
-//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//        context.Response.Redirect("/");
-//        return;
-//    }
-
-//    using var scope = app.Services.CreateScope();
-//    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-
-//    var model = new IsCompletedRequestDto
-//    {
-//        Id = kakaoId,
-//        SignInType = USER_AUTH.KAKAO,
-//        Name = name ?? string.Empty,
-//        Email = email ?? string.Empty
-//    };
-
-//    var isCompletedResponse = await authService.IsCompleted(model);
-//    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
-//    {
-//        var claims = new List<Claim>
-//        {
-//            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
-//            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
-//        };
-
-//        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
-//        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
-
-//        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
-//    }
-//    else
-//    {
-//        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//    }
-
-//    context.Response.Redirect("/");
-//});
-
-//app.MapGet("/signout", async context =>
-//{
-//    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
-//    context.Session.Clear();
-//    context.Response.Redirect("/");
-//});
+app.MapDefaultEndpoints();
 
 app.UseAntiforgery();
 
