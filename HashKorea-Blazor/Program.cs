@@ -274,34 +274,6 @@ app.MapGet("/signout", async context =>
     context.Response.Redirect("/");
 });
 
-//app.Use(async (context, next) =>
-//{
-//    if (context.Request.Path.StartsWithSegments("/signin/kakao"))
-//    {
-//        var authProperties = new AuthenticationProperties
-//        {
-//            RedirectUri = "/after-login"
-//        };
-
-//        //await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
-//        await context.ChallengeAsync("Kakao", authProperties);
-
-//        return;
-//    } else if (context.Request.Path.StartsWithSegments("/signin/google"))
-//    {
-//        var authProperties = new AuthenticationProperties
-//        {
-//            RedirectUri = "/after-login"
-//        };
-
-//        await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
-
-//        return;
-//    }
-
-//    await next();
-//});
-
 DatabaseManagementService.MigrationInitialisation(app);
 
 app.MapDefaultEndpoints();
