@@ -21,9 +21,11 @@
 
 @* mobile sidebar menu*@
 <RadzenSidebar Responsive="false" @bind-Expanded="@sidebarExpanded" style="position: absolute; z-index: 3" class="full-height">
+
     <RadzenStack AlignItems="Radzen.AlignItems.End" class="rz-p-2">
         <RadzenButton Icon="west" Variant="Radzen.Variant.Text" ButtonStyle="ButtonStyle.Secondary" Click="@(() => sidebarExpanded = false)" />
     </RadzenStack>
+
     <RadzenPanelMenu>
         @* <RadzenPanelMenuItem Text="Users" Icon="account_box" /> *@
         <RadzenPanelMenuItem Text="Home" Icon="home" Path="/" />
