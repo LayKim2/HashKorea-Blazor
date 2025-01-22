@@ -15,20 +15,28 @@
                   ButtonStyle="ButtonStyle.Light"
                   Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc;" />
 
-    <RadzenButton Click=@(() => {}) 
+    <RadzenButton Click="@GoogleLogin"
                   Text="Continue with Google"
                   ButtonStyle="ButtonStyle.Light"
-                  Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc;" />
-
-    <a href="login"
-       style="display: block; width: 100%; margin-bottom: 24px; background-color: #FEE500; color: #000; text-align: center; padding: 10px; text-decoration: none; border: none;">
-        Continue With Kakao
-    </a>
+                  Style="width: 100%; margin-bottom: 8px; border: 1px solid #ccc; background-color: #fff; color: #757575;">
+        <ChildContent>
+            <img src="/images/google_logo.svg"/>
+            Continue with Google
+        </ChildContent>
+    </RadzenButton>
 
     <RadzenButton Click="@KakaoLogin"
                   Text="Continue With Kakao"
                   ButtonStyle="ButtonStyle.Secondary"
-                  Style="width: 100%; margin-bottom: 24px; background-color: #FEE500; color: #000; border: none;" />
+                  Style="width: 100%; margin-bottom: 24px; background-color: #FEE500; color: #000; border: none;">
+        <ChildContent>
+            <img src="/images/kakao_logo.svg"/>
+            Continue with Kakao
+        </ChildContent>
+    </RadzenButton>
+
+
+
 
     <div class="text-center mb-4">
         <RadzenText TextStyle="TextStyle.Body1">OR</RadzenText>
@@ -62,6 +70,11 @@
     {
         // forceLoad: redirect
         NavigationManager.NavigateTo("/signin/kakao", forceLoad: true);
+    }
+
+    private void GoogleLogin()
+    {
+        NavigationManager.NavigateTo("/signin/google", forceLoad: true);
     }
 
 }

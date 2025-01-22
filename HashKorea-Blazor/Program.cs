@@ -104,8 +104,6 @@ builder.Services.AddAuthentication(options =>
 {
     googleOptions.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
     googleOptions.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
-    googleOptions.AccessDeniedPath = "/access-denied";
-    //googleOptions.SignInScheme = AppConstants.AuthScheme;
     googleOptions.CallbackPath = new PathString("/signin-google");
 })
 .AddKakaoTalk("Kakao", kakaoOptions =>
@@ -118,7 +116,6 @@ builder.Services.AddAuthentication(options =>
     kakaoOptions.UserInformationEndpoint = "https://kapi.kakao.com/v2/user/me";
 
     kakaoOptions.SaveTokens = true;
-
 });
 
 
@@ -151,10 +148,18 @@ app.MapGet("/signin/kakao", async context =>
     await context.ChallengeAsync("Kakao", properties);
 });
 
+app.MapGet("/signin/google", async context =>
+{
+    var properties = new AuthenticationProperties
+    {
+        RedirectUri = "/signin/google/callback",
+    };
+
+    await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, properties);
+});
+
 app.MapGet("/signin/kakao/callback", async context =>
 {
-
-    Console.WriteLine("h1");
     var result = await context.AuthenticateAsync("Kakao");
 
     if (result?.Succeeded != true)
@@ -162,8 +167,6 @@ app.MapGet("/signin/kakao/callback", async context =>
         context.Response.Redirect("/");
         return;
     }
-
-    Console.WriteLine("h2");
 
     var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
     var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
@@ -199,22 +202,71 @@ app.MapGet("/signin/kakao/callback", async context =>
         var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
         var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
 
-
-        Console.WriteLine("h3");
-
         await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
 
     }
     else
     {
-
-        Console.WriteLine("h4");
-
         await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
     }
 
     context.Response.Redirect("/");
 });
+
+app.MapGet("/signin/google/callback", async context =>
+{
+    var result = await context.AuthenticateAsync(GoogleDefaults.AuthenticationScheme);
+
+    if (result?.Succeeded != true)
+    {
+        context.Response.Redirect("/");
+        return;
+    }
+
+    var googleId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+
+    if (string.IsNullOrEmpty(googleId))
+    {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        context.Response.Redirect("/");
+        return;
+    }
+
+    using var scope = app.Services.CreateScope();
+    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+
+    var model = new IsCompletedRequestDto
+    {
+        Id = googleId,
+        SignInType = USER_AUTH.GOOGLE,
+        Name = name ?? string.Empty,
+        Email = email ?? string.Empty
+    };
+
+    var isCompletedResponse = await authService.IsCompleted(model);
+    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
+            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.GOOGLE);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+    }
+    else
+    {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+
+    context.Response.Redirect("/");
+});
+
 
 app.MapGet("/signout", async context =>
 {
