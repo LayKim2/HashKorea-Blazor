@@ -22,17 +22,17 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
-// when you use http request with other api in Service
+// when you use http request with other api in Service or razor
 builder.Services.AddHttpContextAccessor();
 
 // when you use like MVC pattern (controller)
-builder.Services.AddControllersWithViews();
+//builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<ISharedService, SharedService>();
 builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFileService, FileService>();
-builder.Services.AddSingleton<IMemoryManagementService, MemoryManagementService>(); // Redis 처리용 | 중앙에서 하나로 처리하므로 SingleTon으로 처리
+//builder.Services.AddSingleton<IMemoryManagementService, MemoryManagementService>(); // Redis 처리용 | 중앙에서 하나로 처리하므로 SingleTon으로 처리
 
 // mudblazor
 builder.Services.AddMudServices();
@@ -267,7 +267,6 @@ app.MapGet("/signin/google/callback", async context =>
     context.Response.Redirect("/");
 });
 
-
 app.MapGet("/signout", async context =>
 {
     await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
@@ -285,10 +284,10 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 // when you use controller (for access to api url )
-app.MapControllerRoute(
-    name: "default",
-    pattern: "{controller=Home}/{action=Index}/{id?}")
-    .WithStaticAssets();
+//app.MapControllerRoute(
+//    name: "default",
+//    pattern: "{controller=Home}/{action=Index}/{id?}")
+//    .WithStaticAssets();
 
 // REDIS TEST
 //app.Lifetime.ApplicationStarted.Register(async () =>
