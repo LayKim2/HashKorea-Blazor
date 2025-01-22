@@ -9,6 +9,9 @@ using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Components.Server;
 using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
+using HashKorea.DTOs.Auth;
+using HashKorea.Common.Constants;
 
 var solutionDirectory = Directory.GetParent(Directory.GetCurrentDirectory())?.FullName;
 var envPath = Path.Combine(solutionDirectory, ".env");
@@ -90,53 +93,36 @@ builder.Services.AddServerSideBlazor()
 // get image of base64 or byte file( you can`t get base64 string from js if you don`t have this one) - end
 
 
-//builder.Services.AddAuthentication(options =>
-//{
-//    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
-//})
-//.AddCookie()
-//.AddKakaoTalk(options =>
-//{
-//    options.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID");
-//    options.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
-
-//    var redirectUri = Environment.GetEnvironmentVariable("KAKAO_REDIRECT_URI");
-//    var uri = new Uri(redirectUri);
-//    options.CallbackPath = new PathString(uri.AbsolutePath);
-//});
-
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<AuthenticationStateProvider, ServerAuthenticationStateProvider>();
-builder.Services.AddAuthentication(AppConstants.AuthScheme)
-    .AddCookie(AppConstants.AuthScheme, cookieOptions =>
-    {
-        cookieOptions.Cookie.Name = AppConstants.AuthScheme;
-    })
-    .AddGoogle(GoogleDefaults.AuthenticationScheme, googleOptions =>
-    {
-        googleOptions.ClientId = "94605561544-md5tee3juotjinm66p7qtgo8ubqts5jj.apps.googleusercontent.com";
-        googleOptions.ClientSecret = "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";
-        googleOptions.AccessDeniedPath = "/access-denied";
-        googleOptions.SignInScheme = AppConstants.AuthScheme;
-        googleOptions.CallbackPath = new PathString("/signin-google");  // 리디렉션 경로
-    })
-    .AddKakaoTalk("Kakao", kakaoOptions =>
-    {
-        kakaoOptions.ClientId = "b4f436e21e363b5faef09df87c109967";  // 카카오 REST API 키
-        kakaoOptions.ClientSecret = "3T3tFIBHzC9MsvhbpKPXcCmuTkJum55m";  // 선택 사항
-        kakaoOptions.CallbackPath = new PathString("/signin-kakao");  // 리디렉션 경로
-        kakaoOptions.AuthorizationEndpoint = "https://kauth.kakao.com/oauth/authorize";
-        kakaoOptions.TokenEndpoint = "https://kauth.kakao.com/oauth/token";
-        kakaoOptions.UserInformationEndpoint = "https://kapi.kakao.com/v2/user/me";
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddCookie()
+.AddGoogle(GoogleDefaults.AuthenticationScheme, googleOptions =>
+{
+    googleOptions.ClientId = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_ID");
+    googleOptions.ClientSecret = Environment.GetEnvironmentVariable("GOOGLE_CLIENT_SECRET");
+    googleOptions.AccessDeniedPath = "/access-denied";
+    //googleOptions.SignInScheme = AppConstants.AuthScheme;
+    googleOptions.CallbackPath = new PathString("/signin-google");
+})
+.AddKakaoTalk("Kakao", kakaoOptions =>
+{
+    kakaoOptions.ClientId = Environment.GetEnvironmentVariable("KAKAO_CLIENT_ID"); 
+    kakaoOptions.ClientSecret = Environment.GetEnvironmentVariable("KAKAO_CLIENT_SECRET");
+    kakaoOptions.CallbackPath = new PathString("/signin-kakao");
+    kakaoOptions.AuthorizationEndpoint = "https://kauth.kakao.com/oauth/authorize";
+    kakaoOptions.TokenEndpoint = "https://kauth.kakao.com/oauth/token";
+    kakaoOptions.UserInformationEndpoint = "https://kapi.kakao.com/v2/user/me";
 
-        kakaoOptions.SaveTokens = true;
+    kakaoOptions.SaveTokens = true;
 
-    });
+});
 
 
 var app = builder.Build();
-
-
 
 //app.UseSession();
 
@@ -154,24 +140,115 @@ app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.Use(async (context, next) =>
+
+app.MapGet("/signin/kakao", async context =>
 {
-    if (context.Request.Path.StartsWithSegments("/login"))
+    var properties = new AuthenticationProperties
     {
-        var authProperties = new AuthenticationProperties
-        {
-            RedirectUri = "/after-login"
-        };
+        RedirectUri = "/signin/kakao/callback",
+    };
 
-        //await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
-        await context.ChallengeAsync("Kakao", authProperties);
+    await context.ChallengeAsync("Kakao", properties);
+});
 
+app.MapGet("/signin/kakao/callback", async context =>
+{
 
+    Console.WriteLine("h1");
+    var result = await context.AuthenticateAsync("Kakao");
+
+    if (result?.Succeeded != true)
+    {
+        context.Response.Redirect("/");
         return;
     }
 
-    await next();
+    Console.WriteLine("h2");
+
+    var kakaoId = result.Principal.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var name = result.Principal.FindFirst(ClaimTypes.Name)?.Value;
+    var email = result.Principal.FindFirst(ClaimTypes.Email)?.Value;
+
+    if (string.IsNullOrEmpty(kakaoId))
+    {
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+        context.Response.Redirect("/");
+        return;
+    }
+
+    using var scope = app.Services.CreateScope();
+    var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
+
+    var model = new IsCompletedRequestDto
+    {
+        Id = kakaoId,
+        SignInType = USER_AUTH.KAKAO,
+        Name = name ?? string.Empty,
+        Email = email ?? string.Empty
+    };
+
+    var isCompletedResponse = await authService.IsCompleted(model);
+    if (isCompletedResponse.Success && isCompletedResponse.Data != null)
+    {
+        var claims = new List<Claim>
+        {
+            new Claim(ClaimTypes.NameIdentifier, isCompletedResponse.Data.id),
+            new Claim(ClaimTypes.Name, isCompletedResponse.Data.name)
+        };
+
+        var claimsIdentity = new ClaimsIdentity(claims, USER_AUTH.KAKAO);
+        var claimsPrincipal = new ClaimsPrincipal(claimsIdentity);
+
+
+        Console.WriteLine("h3");
+
+        await context.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, claimsPrincipal);
+
+    }
+    else
+    {
+
+        Console.WriteLine("h4");
+
+        await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    }
+
+    context.Response.Redirect("/");
 });
+
+app.MapGet("/signout", async context =>
+{
+    await context.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+    context.Response.Redirect("/");
+});
+
+//app.Use(async (context, next) =>
+//{
+//    if (context.Request.Path.StartsWithSegments("/signin/kakao"))
+//    {
+//        var authProperties = new AuthenticationProperties
+//        {
+//            RedirectUri = "/after-login"
+//        };
+
+//        //await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
+//        await context.ChallengeAsync("Kakao", authProperties);
+
+//        return;
+//    } else if (context.Request.Path.StartsWithSegments("/signin/google"))
+//    {
+//        var authProperties = new AuthenticationProperties
+//        {
+//            RedirectUri = "/after-login"
+//        };
+
+//        await context.ChallengeAsync(GoogleDefaults.AuthenticationScheme, authProperties);
+
+//        return;
+//    }
+
+//    await next();
+//});
 
 DatabaseManagementService.MigrationInitialisation(app);
 
