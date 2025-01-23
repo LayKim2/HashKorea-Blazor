@@ -72,6 +72,9 @@ public class SharedService : ISharedService
                     Id = p.Id,
                     Title = p.Title,
                     Category = p.Category,
+                    Location = p.Location,
+                    StartDate = p.StartDate,
+                    EndDate = p.EndDate
                     //Content = p.Content
                 })
                 .ToListAsync();

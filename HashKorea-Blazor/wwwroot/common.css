@@ -17,8 +17,17 @@
     cursor: pointer;
 }
 
+.list-card {
+    transition: transform 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+    .list-card:hover {
+        transform: translateY(-5px);
+    }
+
 .image-container {
-    margin: -1px -1px 0 -1px;
+    margin: 10px 0 0 0;
 }
 
 .list-image {

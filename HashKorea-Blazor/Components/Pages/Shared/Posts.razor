@@ -10,7 +10,8 @@
 
 @rendermode InteractiveServer
 
-@if(isLoading) {
+@if (isLoading)
+{
     <MudOverlay @bind-Visible="isLoading" DarkBackground="false" ZIndex="9999" AutoClose="true">
         <div id="app" style="margin: 0 auto; width: 100vw; height: 100vh">
             <div style="padding-top: 150px; ">
@@ -21,7 +22,9 @@
             </div>
         </div>
     </MudOverlay>
-} else {
+}
+else
+{
     <RadzenStack Orientation="Radzen.Orientation.Horizontal" JustifyContent="JustifyContent.SpaceBetween" AlignItems="Radzen.AlignItems.Center" Class="rz-p-4 rz-pt-12 rz-pb-8">
         <RadzenText TextStyle="TextStyle.H6" Class="fw-bold fs-4 text-muted">
             Total: <span class="text-primary fs-3">@model.Count</span>
@@ -43,13 +46,23 @@
                     <RadzenImage Path="@(string.IsNullOrEmpty(item.MainImageUrl) ? "/images/main-icon.png" : item.MainImageUrl)" class="list-image lazy-image" loading="lazy" />
                 </div>
                 <div class="card-content">
-                    <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
+                    <div class="d-flex justify-content-between align-items-center">
+                        <MudChip T="string" Variant="MudBlazor.Variant.Outlined" Color="Color.Secondary">@item.Category</MudChip>
+                        <RadzenBadge BadgeStyle="BadgeStyle.Light"
+                                     Shade="Shade.Lighter"
+                                     IsPill="true"
+                                     class="rz-border-radius-10 rz-px-3 rz-py-2 rz-border-1 rz-border-base-200">
+                            <RadzenIcon Icon="event" class="rz-mr-1" Style="font-size: 20px; vertical-align: bottom;" />
+                            @item.StartDate.ToString("MMM dd") - @item.EndDate.ToString("MMM dd")
+                        </RadzenBadge>
+                    </div>
                     <RadzenText TextStyle="TextStyle.H6" class="mt-2">@item.Title</RadzenText>
                 </div>
             </RadzenCard>
         </Virtualize>
     </div>
 }
+
 
 
 @code {
@@ -71,6 +84,18 @@
         await LoadData();
     }
 
+    private BadgeStyle GetCategoryStyle(GetPostsResponseDto item)
+    {
+        var today = DateOnly.FromDateTime(DateTime.Today);
+        if (item.EndDate < today)
+            return BadgeStyle.Danger;  // Past
+        if (item.StartDate <= today && today <= item.EndDate)
+            return BadgeStyle.Success;  // Current
+        return BadgeStyle.Info;  // Upcoming
+    }
+
+
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -84,7 +109,7 @@
         if (SearchWord != previousSearchWord)
         {
             previousSearchWord = SearchWord;
-            await LoadData(); 
+            await LoadData();
         }
     }
 
