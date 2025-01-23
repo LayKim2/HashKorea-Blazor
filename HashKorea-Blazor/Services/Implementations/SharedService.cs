@@ -157,6 +157,10 @@ public class SharedService : ISharedService
                 Type = existingPost.Type,
                 Category = existingPost.Category,
                 CategoryCD = existingPost.CategoryCD,
+                Location = existingPost.Location,
+                LocationCD = existingPost.LocationCD,
+                StartDate = existingPost.StartDate,
+                EndDate = existingPost.EndDate,
                 Title = existingPost.Title,
                 Content = existingPost.Content
             };
@@ -301,6 +305,10 @@ public class SharedService : ISharedService
                 existingPost.Type = model.Type;
                 existingPost.Category = model.Category;
                 existingPost.CategoryCD = model.CategoryCD;
+                existingPost.Location = model.Location;
+                existingPost.LocationCD = model.LocationCD;
+                existingPost.StartDate = model.StartDate;
+                existingPost.EndDate = model.EndDate;
 
                 var convertedContentResponse = await ConvertContent(model.Content, userId, model.ImageFiles);
 
@@ -355,6 +363,10 @@ public class SharedService : ISharedService
                     Type = model.Type,
                     Category = model.Category,
                     CategoryCD = model.CategoryCD,
+                    Location = model.Location,
+                    LocationCD = model.LocationCD,
+                    StartDate = model.StartDate,
+                    EndDate = model.EndDate,
                     Content = content,
                     CreatedDate = DateTime.Now,
                     LastUpdatedDate = DateTime.Now

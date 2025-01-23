@@ -36,23 +36,34 @@
             <MudGrid Spacing="2" Class="mb-1">
                 <!-- Period -->
                 <MudItem xs="12" md="4" Class="mb-2">
-                    <MudSelect T="string" Label="Period" AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
-                    </MudSelect>
+                    <MudDateRangePicker Label="Period"
+                                        Color="Color.Info"
+                                        Required="true"
+                                        DateFormat="MM/dd/yyyy"
+                                        AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                                        Variant="MudBlazor.Variant.Outlined"
+                                        Dense="true"
+                                        DateRange="model.DateRange"
+                                        DateRangeChanged="OnDateRangeChanged" />
                 </MudItem>
 
                 <!-- Location -->
                 <MudItem xs="12" md="4" Class="mb-2">
-                    <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable Disabled>
+                    <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn" Required="true"
+                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                               Value="model.LocationCD" ValueChanged="OnLocationChanged" For="@(() => model.LocationCD)">
+                        @foreach (var location in locations)
+                        {
+                            <MudSelectItem Value="@location.Code">@location.Name</MudSelectItem>
+                        }
                     </MudSelect>
                 </MudItem>
 
                 <!-- Category -->
                 <MudItem xs="12" md="4" Class="mb-2">
-                    <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                               Value="model.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => model.CategoryCD)">
+                    <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category" Required="true"
+                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                    Value="model.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => model.CategoryCD)">
 
                         @foreach (var category in categories)
                         {
@@ -103,19 +114,18 @@
     };
 
     private List<GetCommonCodeResponseDto> locations = new()
-{
-    new GetCommonCodeResponseDto { Id = 1, Type = "Location", Code = "01", Name = "Seoul" },
-    new GetCommonCodeResponseDto { Id = 2, Type = "Location", Code = "02", Name = "Gyeonggi" },
-    new GetCommonCodeResponseDto { Id = 3, Type = "Location", Code = "03", Name = "Gangwon" },
-    new GetCommonCodeResponseDto { Id = 4, Type = "Location", Code = "04", Name = "Chungbuk" },
-    new GetCommonCodeResponseDto { Id = 5, Type = "Location", Code = "05", Name = "Chungnam" },
-    new GetCommonCodeResponseDto { Id = 6, Type = "Location", Code = "06", Name = "Jeonbuk" },
-    new GetCommonCodeResponseDto { Id = 7, Type = "Location", Code = "07", Name = "Jeonnam" },
-    new GetCommonCodeResponseDto { Id = 8, Type = "Location", Code = "08", Name = "Gyeongbuk" },
-    new GetCommonCodeResponseDto { Id = 9, Type = "Location", Code = "09", Name = "Gyeongnam" },
-    new GetCommonCodeResponseDto { Id = 10, Type = "Location", Code = "10", Name = "Jeju" }
-};
-
+    {
+        new GetCommonCodeResponseDto { Id = 1, Type = "Location", Code = "01", Name = "Seoul" },
+        new GetCommonCodeResponseDto { Id = 2, Type = "Location", Code = "02", Name = "Gyeonggi" },
+        new GetCommonCodeResponseDto { Id = 3, Type = "Location", Code = "03", Name = "Gangwon" },
+        new GetCommonCodeResponseDto { Id = 4, Type = "Location", Code = "04", Name = "Chungbuk" },
+        new GetCommonCodeResponseDto { Id = 5, Type = "Location", Code = "05", Name = "Chungnam" },
+        new GetCommonCodeResponseDto { Id = 6, Type = "Location", Code = "06", Name = "Jeonbuk" },
+        new GetCommonCodeResponseDto { Id = 7, Type = "Location", Code = "07", Name = "Jeonnam" },
+        new GetCommonCodeResponseDto { Id = 8, Type = "Location", Code = "08", Name = "Gyeongbuk" },
+        new GetCommonCodeResponseDto { Id = 9, Type = "Location", Code = "09", Name = "Gyeongnam" },
+        new GetCommonCodeResponseDto { Id = 10, Type = "Location", Code = "10", Name = "Jeju" }
+    };
 
     // add js logic
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -150,7 +160,8 @@
         {
             model = new PostRequestDto()
                 {
-                    Type = postType
+                    Type = postType,
+                    DateRange = new DateRange(DateTime.Now, DateTime.Now.AddDays(1))
                 };
 
             isDataLoaded = true;
@@ -167,6 +178,7 @@
         }
     }
 
+
     private async Task LoadExistingPost(int postId)
     {
         var response = await SharedService.GetPostEdit(postId);
@@ -179,6 +191,9 @@
             model.Type = existingPost.Type;
             model.Category = existingPost.Category;
             model.CategoryCD = existingPost.CategoryCD;
+            model.Location = existingPost.Location;
+            model.LocationCD = existingPost.LocationCD;
+            model.DateRange = new DateRange(new DateTime(existingPost.StartDate.Year, existingPost.StartDate.Month, existingPost.StartDate.Day), new DateTime(existingPost.EndDate.Year, existingPost.EndDate.Month, existingPost.EndDate.Day));
             model.Title = existingPost.Title;
             model.Content = existingPost.Content;
 
@@ -198,6 +213,17 @@
     private void OnCategoryChanged(string selectedCode)
     {
         model.SetCategory(selectedCode, categories);
+    }
+
+    private void OnLocationChanged(string selectedCode)
+    {
+        model.SetLocation(selectedCode, locations);
+    }
+
+    private void OnDateRangeChanged(DateRange? dateRange)
+    {
+        model.DateRange = dateRange;
+        StateHasChanged();
     }
 
     private async Task SavePost()

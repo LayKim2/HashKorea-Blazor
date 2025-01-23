@@ -18,6 +18,18 @@ public class UserPost
     public string Category { get; set; } = string.Empty;
     [Required]
     public string CategoryCD { get; set; } = string.Empty;
+
+    [Required]
+    public string Location { get; set; } = string.Empty;
+
+    [Required]
+    public string LocationCD { get; set; } = string.Empty;
+
+    [Required]
+    public DateOnly StartDate { get; set; }
+
+    [Required]
+    public DateOnly EndDate { get; set; }
     public string MainImagePublicUrl { get; set; } = string.Empty;
     [Required]
     public string Title { get; set; } = string.Empty;
