@@ -49,7 +49,7 @@ public class SharedService : ISharedService
         return userPost != null;
     }
 
-    public async Task<ServiceResponse<List<GetPostsResponseDto>>> GetPosts(string type, string word)
+    public async Task<ServiceResponse<List<GetPostsResponseDto>>> GetPosts(string type, SearchParameters parameters)
     {
         var response = new ServiceResponse<List<GetPostsResponseDto>>();
 
@@ -58,11 +58,27 @@ public class SharedService : ISharedService
             var postsQuery = _context.UserPosts
                                 .Where(p => p.Type == type);
 
-            if (!string.IsNullOrEmpty(word))
+            if (!string.IsNullOrEmpty(parameters.SearchWord))
             {
                 // TO DO: 성능 문제
                 postsQuery = postsQuery
-                    .Where(p => p.Title.ToLower().Contains(word.ToLower()));
+                    .Where(p => p.Title.ToLower().Contains(parameters.SearchWord.ToLower()));
+            }
+
+            if (!string.IsNullOrEmpty(parameters.LocationCD) && parameters.LocationCD != "00")
+            {
+                postsQuery = postsQuery.Where(p => p.LocationCD == parameters.LocationCD);
+            }
+
+            if (!string.IsNullOrEmpty(parameters.CategoryCD) && parameters.CategoryCD != "00")
+            {
+                postsQuery = postsQuery.Where(p => p.CategoryCD == parameters.CategoryCD);
+            }
+
+            if (parameters.StartDate.HasValue && parameters.EndDate.HasValue)
+            {
+                postsQuery = postsQuery.Where(p =>
+                    (p.StartDate <= parameters.EndDate.Value && p.EndDate >= parameters.StartDate.Value));
             }
 
             var posts = await postsQuery
@@ -486,7 +502,7 @@ public class SharedService : ISharedService
         try
         {
             var commonCodes = await _context.CommonCodes
-                .Where(cc => cc.Type == type)
+                .Where(cc => cc.Type == type || cc.Type == COMMON_TYPE.LOCATION)
                 .Select(cc => new GetCommonCodeResponseDto
                 {
                     Id = cc.Id,

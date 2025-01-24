@@ -1,56 +1,62 @@
-﻿@rendermode InteractiveServer
+﻿@using HashKorea.Common.Constants
+@using HashKorea.DTOs.Shared
 
+@rendermode InteractiveServer
+
+@inject ISharedService SharedService
 
 <div class="search-container d-flex align-items-center flex-wrap gap-3 p-3 bg-white rounded-3 shadow-sm w-100">
-    <div class="dropdown flex-grow-1">
+    <div class="dropdown search-item">
         <MudItem>
             <MudDateRangePicker Label="Period"
-                                Variant="MudBlazor.Variant.Outlined"
-                                AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                                Color="Color.Primary"
-                                DateRange="@dateRange"
-                                DateRangeChanged="OnDateRangeChanged" />
+            Variant="MudBlazor.Variant.Outlined"
+            AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+            Color="Color.Primary"
+            DateRange="@searchParams.dateRange"
+            DateRangeChanged="OnDateRangeChanged" Clearable/>
         </MudItem>
     </div>
 
-    <div class="dropdown flex-grow-1">
+    <div class="dropdown search-item">
         <MudItem>
-            <MudSelect T="string" Label="Category"
-                       AdornmentIcon="@Icons.Material.Filled.Category"
-                       Variant="MudBlazor.Variant.Outlined"
-                       AnchorOrigin="Origin.BottomCenter"
-                       Value="selectedCategory" ValueChanged="OnCategoryChanged">
-                <MudSelectItem Value="@("all")">All</MudSelectItem>
-                <MudSelectItem Value="@("category1")">Category 1</MudSelectItem>
-                <MudSelectItem Value="@("category2")">Category 2</MudSelectItem>
+            <MudSelect T="string" Label="Location"
+            AdornmentIcon="@Icons.Material.Filled.LocationOn"
+            Variant="MudBlazor.Variant.Outlined"
+            AnchorOrigin="Origin.BottomCenter"
+            Value="searchParams.LocationCD" ValueChanged="OnLocationChanged" Clearable>
+                @foreach (var location in locations)
+                {
+                    <MudSelectItem Value="@location.Code">@location.Name</MudSelectItem>
+                }
             </MudSelect>
         </MudItem>
     </div>
 
-    <div class="dropdown flex-grow-1">
+    <div class="dropdown search-item">
         <MudItem>
             <MudSelect T="string" Label="Category"
-                       AdornmentIcon="@Icons.Material.Filled.Category"
-                       Variant="MudBlazor.Variant.Outlined"
-                       AnchorOrigin="Origin.BottomCenter"
-                       Value="selectedCategory" ValueChanged="OnCategoryChanged">
-                <MudSelectItem Value="@("all")">All</MudSelectItem>
-                <MudSelectItem Value="@("category1")">Category 1</MudSelectItem>
-                <MudSelectItem Value="@("category2")">Category 2</MudSelectItem>
+            AdornmentIcon="@Icons.Material.Filled.Category"
+            Variant="MudBlazor.Variant.Outlined"
+            AnchorOrigin="Origin.BottomCenter"
+            Value="searchParams.CategoryCD" ValueChanged="OnCategoryChanged" Clearable>
+                @foreach (var category in categories)
+                {
+                    <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
+                }
             </MudSelect>
         </MudItem>
     </div>
 
     <div class="search-input-wrapper">
         <MudTextField T="string"
-                      Placeholder="Enter search keywords..."
-                      Variant="MudBlazor.Variant.Outlined"
-                      Adornment="Adornment.Start"
-                      AdornmentIcon="@Icons.Material.Filled.Search"
-                      Value="@SearchWord"
-                      ValueChanged="@((string s) => OnInputChange(s))"
-                      OnKeyDown="OnKeyDown"
-                      Immediate="true" />
+        Placeholder="Enter search keywords..."
+        Variant="MudBlazor.Variant.Outlined"
+        Adornment="Adornment.Start"
+        AdornmentIcon="@Icons.Material.Filled.Search"
+        Value="@searchParams.SearchWord"
+        ValueChanged="@((string s) => OnInputChange(s))"
+        OnKeyDown="OnKeyDown"
+        Immediate="true" />
     </div>
 
     <button class="btn btn-primary d-flex align-items-center gap-2 search-button" onclick="@(() => OnSearchClick())">
@@ -61,13 +67,36 @@
 </div>
 
 @code {
-    private string SearchWord = string.Empty;
+    [Parameter] public string PostType { get; set; } = POST_TYPE.PROMOTION;
+    [Parameter] public EventCallback<SearchParameters> OnSearchChanged { get; set; }
 
-    [Parameter] public EventCallback<string> OnSearchChanged { get; set; }
+    private List<GetCommonCodeResponseDto> categories = new();
+    private List<GetCommonCodeResponseDto> locations = new();
+
+    private SearchParameters searchParams = new SearchParameters();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await LoadCategories();
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        var response = await SharedService.GetCommonCodes(PostType);
+        if (response.Success && response.Data != null)
+        {
+            categories = response.Data.Where(cc => cc.Type == PostType).ToList();
+            locations = response.Data.Where(cc => cc.Type == COMMON_TYPE.LOCATION).ToList();
+            StateHasChanged();
+        }
+    }
 
     private void OnInputChange(string word)
     {
-        SearchWord = word;
+        searchParams.SearchWord = word;
     }
 
     private async Task OnKeyDown(KeyboardEventArgs e)
@@ -82,30 +111,23 @@
     {
         if (OnSearchChanged.HasDelegate)
         {
-            await OnSearchChanged.InvokeAsync(SearchWord);
+            await OnSearchChanged.InvokeAsync(searchParams);
         }
-
     }
-
-    private DateRange dateRange;
-    private string selectedLocation;
-    private string selectedCategory;
 
     private void OnDateRangeChanged(DateRange range)
     {
-        dateRange = range;
-        // 추가 로직
+        searchParams.dateRange = range;
     }
 
     private void OnLocationChanged(string location)
     {
-        selectedLocation = location;
-        // 추가 로직
+        searchParams.LocationCD = location;
     }
 
     private void OnCategoryChanged(string category)
     {
-        selectedCategory = category;
-        // 추가 로직
+        searchParams.CategoryCD = category;
     }
+
 }

@@ -1,4 +1,5 @@
-﻿@using HashKorea.DTOs.Shared
+﻿@using HashKorea.Common.Constants
+@using HashKorea.DTOs.Shared
 @using Microsoft.AspNetCore.Components.Authorization
 @using MudBlazor
 @using System.Security.Claims
@@ -72,16 +73,16 @@ else
     private ClaimsPrincipal? User { get; set; }
 
     [Parameter] public string Type { get; set; } = string.Empty;
-    [Parameter] public string SearchWord { get; set; } = string.Empty;
+    [Parameter] public SearchParameters SearchParameters { get; set; } = new SearchParameters();
 
-    private string previousSearchWord = string.Empty;
+    private SearchParameters previousSearchParameters;
 
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
         User = authState.User;
 
-        await LoadData();
+        // await LoadData();
     }
 
     private BadgeStyle GetCategoryStyle(GetPostsResponseDto item)
@@ -94,8 +95,6 @@ else
         return BadgeStyle.Info;  // Upcoming
     }
 
-
-
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
@@ -106,18 +105,15 @@ else
 
     protected override async Task OnParametersSetAsync()
     {
-        if (SearchWord != previousSearchWord)
-        {
-            previousSearchWord = SearchWord;
-            await LoadData();
-        }
+        previousSearchParameters = SearchParameters;
+        await LoadData();
     }
 
     private async Task LoadData()
     {
         isLoading = true;
 
-        var response = await SharedService.GetPosts("promotion", SearchWord);
+        var response = await SharedService.GetPosts(POST_TYPE.PROMOTION, SearchParameters);
         if (response.Success)
         {
             model = response.Data;
@@ -140,8 +136,6 @@ else
     {
         // TO DO: should not do redirect
         NavigationManager.NavigateTo("/post/add?type=" + Type, false);
-        // NavigationManager.NavigateTo("/post/add", false);
-
     }
 
 }
