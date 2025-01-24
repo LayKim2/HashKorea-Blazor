@@ -1,4 +1,5 @@
 ﻿using HashKorea.Extensions;
+using System.Linq.Expressions;
 
 namespace HashKorea.DTOs.Shared;
 
@@ -17,4 +18,14 @@ public class GetPostsResponseDto
     public DateTime CreatedDate { get; set; }
     public string RelativeTime => CreatedDate.ToRelativeTimeString();
 
+}
+
+
+
+public static class QueryableExtensions
+{
+    public static IQueryable<T> WhereIf<T>(this IQueryable<T> query, bool condition, Expression<Func<T, bool>> predicate)
+    {
+        return condition ? query.Where(predicate) : query;
+    }
 }

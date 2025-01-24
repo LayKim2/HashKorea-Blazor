@@ -55,33 +55,17 @@ public class SharedService : ISharedService
 
         try
         {
-            var postsQuery = _context.UserPosts
-                                .Where(p => p.Type == type);
-
-            if (!string.IsNullOrEmpty(parameters.SearchWord))
-            {
-                // TO DO: 성능 문제
-                postsQuery = postsQuery
-                    .Where(p => p.Title.ToLower().Contains(parameters.SearchWord.ToLower()));
-            }
-
-            if (!string.IsNullOrEmpty(parameters.LocationCD) && parameters.LocationCD != "00")
-            {
-                postsQuery = postsQuery.Where(p => p.LocationCD == parameters.LocationCD);
-            }
-
-            if (!string.IsNullOrEmpty(parameters.CategoryCD) && parameters.CategoryCD != "00")
-            {
-                postsQuery = postsQuery.Where(p => p.CategoryCD == parameters.CategoryCD);
-            }
-
-            if (parameters.StartDate.HasValue && parameters.EndDate.HasValue)
-            {
-                postsQuery = postsQuery.Where(p =>
-                    (p.StartDate <= parameters.EndDate.Value && p.EndDate >= parameters.StartDate.Value));
-            }
-
-            var posts = await postsQuery
+            var posts = await _context.UserPosts
+                .AsQueryable()
+                .Where(p => p.Type == type)
+                .WhereIf(!string.IsNullOrEmpty(parameters.SearchWord),
+                    p => EF.Functions.Like(p.Title, $"%{parameters.SearchWord}%"))
+                .WhereIf(!string.IsNullOrEmpty(parameters.LocationCD) && parameters.LocationCD != "00",
+                    p => p.LocationCD == parameters.LocationCD)
+                .WhereIf(!string.IsNullOrEmpty(parameters.CategoryCD) && parameters.CategoryCD != "00",
+                    p => p.CategoryCD == parameters.CategoryCD)
+                .WhereIf(parameters.StartDate.HasValue && parameters.EndDate.HasValue,
+                    p => p.StartDate <= parameters.EndDate!.Value && p.EndDate >= parameters.StartDate!.Value)
                 .OrderByDescending(p => p.Id)
                 .Select(p => new GetPostsResponseDto
                 {
@@ -91,7 +75,6 @@ public class SharedService : ISharedService
                     Location = p.Location,
                     StartDate = p.StartDate,
                     EndDate = p.EndDate
-                    //Content = p.Content
                 })
                 .ToListAsync();
 
