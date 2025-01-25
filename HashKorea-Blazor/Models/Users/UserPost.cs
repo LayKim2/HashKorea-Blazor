@@ -31,6 +31,7 @@ public class UserPost
     [Required]
     public DateOnly EndDate { get; set; }
     public string MainImagePublicUrl { get; set; } = string.Empty;
+    public string MainImageStoragePath { get; set; } = string.Empty;
     [Required]
     public string Title { get; set; } = string.Empty;
 

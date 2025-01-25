@@ -90,6 +90,11 @@ builder.Services.AddServerSideBlazor()
         options.MaximumReceiveMessageSize = 1024 * 1024 * 50; // MAX 50MB
     });
 
+builder.WebHost.ConfigureKestrel(options =>
+{
+    options.Limits.MaxRequestBodySize = 1024 * 1024 * 50; // 50MB
+});
+
 // get image of base64 or byte file( you can`t get base64 string from js if you don`t have this one) - end
 
 

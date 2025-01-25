@@ -31,7 +31,7 @@ window.getTinyMCEContent = async (textareaId) => {
             // base64 to blob
             content = content.replace(/<img[^>]+src="data:image\/([^;]+);base64,([^"]+)"/g, (match, mimeType, base64Data) => {
 
-                var blobUrl = window.createBlobUrl(base64Data, 'image/' + mimeType);
+                var blobUrl = window.createBlobUrlFromBase64(base64Data, 'image/' + mimeType);
 
                 return match.replace(`src="data:image/${mimeType};base64,${base64Data}"`, `src="${blobUrl}"`);
             });
@@ -48,12 +48,11 @@ window.getTinyMCEContent = async (textareaId) => {
 
 
 // 2.2 convert base64 to blob
-window.createBlobUrl = function (base64, contentType) {
+window.createBlobUrlFromBase64 = function (base64, contentType) {
 
     base64 = base64.replace(/[^A-Za-z0-9+/=]/g, '');
 
     try {
-        // Base64에서 실제 데이터 부분만 추출
         const byteCharacters = atob(base64);
         const byteNumbers = new Array(byteCharacters.length);
         for (let i = 0; i < byteCharacters.length; i++) {
@@ -67,6 +66,12 @@ window.createBlobUrl = function (base64, contentType) {
         console.error("Error while creating Blob URL:", error);
         return "";
     }
+};
+
+// 2.2 convert file buffer to blob
+window.createBlobUrlFromBuffer = (data, contentType) => {
+    const blob = new Blob([new Uint8Array(data)], { type: contentType });
+    return URL.createObjectURL(blob);
 };
 
 // 2.3 init TinyMCE for Editor

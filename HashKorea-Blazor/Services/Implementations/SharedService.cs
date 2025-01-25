@@ -71,6 +71,7 @@ public class SharedService : ISharedService
                 {
                     Id = p.Id,
                     Title = p.Title,
+                    MainImageUrl = p.MainImageStoragePath,
                     Category = p.Category,
                     Location = p.Location,
                     StartDate = p.StartDate,
@@ -156,6 +157,7 @@ public class SharedService : ISharedService
             var responseDto = new EditPostResponseDto
             {
                 Id = existingPost.Id,
+                MainImageStoragePath = existingPost.MainImageStoragePath,
                 Type = existingPost.Type,
                 Category = existingPost.Category,
                 CategoryCD = existingPost.CategoryCD,
@@ -267,7 +269,7 @@ public class SharedService : ISharedService
     }
 
     [Authorize]
-    public async Task<ServiceResponse<int>> UpdatePost(PostRequestDto model)
+    public async Task<ServiceResponse<int>> UpdatePost(PostRequestDto request)
     {
         var response = new ServiceResponse<int>();
         var updatePost = new UserPost();
@@ -276,7 +278,7 @@ public class SharedService : ISharedService
 
         try
         {
-             var userId = await GetUserId();
+            var userId = await GetUserId();
 
             bool isExistUser = await IsExistUser(userId);
 
@@ -291,9 +293,10 @@ public class SharedService : ISharedService
 
             UserPost userPost;
 
-            if (model.PostId.HasValue)
+            // 1. update
+            if (request.PostId.HasValue)
             {
-                var existingPost = await _context.UserPosts.FirstOrDefaultAsync(p => p.Id == model.PostId.Value && p.UserId == userId);
+                var existingPost = await _context.UserPosts.FirstOrDefaultAsync(p => p.Id == request.PostId.Value && p.UserId == userId);
 
                 if (existingPost == null)
                 {
@@ -303,16 +306,43 @@ public class SharedService : ISharedService
                     return response;
                 }
 
-                existingPost.Title = model.Title;
-                existingPost.Type = model.Type;
-                existingPost.Category = model.Category;
-                existingPost.CategoryCD = model.CategoryCD;
-                existingPost.Location = model.Location;
-                existingPost.LocationCD = model.LocationCD;
-                existingPost.StartDate = model.StartDate;
-                existingPost.EndDate = model.EndDate;
+                existingPost.Title = request.Title;
+                existingPost.Type = request.Type;
+                existingPost.Category = request.Category;
+                existingPost.CategoryCD = request.CategoryCD;
+                existingPost.Location = request.Location;
+                existingPost.LocationCD = request.LocationCD;
+                existingPost.StartDate = request.StartDate;
+                existingPost.EndDate = request.EndDate;
 
-                var convertedContentResponse = await ConvertContent(model.Content, userId, model.ImageFiles);
+                if (request.MainImageFile != null && request.MainImageFile.Content.Length > 0)
+                {
+                    var folderPath = $"content/{userId}";
+
+                    var uploadResult = await _fileService.UploadFile(request.MainImageFile, folderPath);
+
+                    if (uploadResult.Success)
+                    {
+                        existingPost.MainImageStoragePath = uploadResult.Data.S3Path;
+                        existingPost.MainImagePublicUrl = uploadResult.Data.CloudFrontUrl;
+                    }
+                    else
+                    {
+                        return new ServiceResponse<int>
+                        {
+                            Success = false,
+                            Code = uploadResult.Code,
+                            Message = uploadResult.Message
+                        };
+                    }
+                }
+                else if (string.IsNullOrEmpty(request.MainImageUrl))
+                {
+                    existingPost.MainImageStoragePath = string.Empty;
+                    existingPost.MainImagePublicUrl = string.Empty;
+                }
+
+                var convertedContentResponse = await ConvertContent(request.Content, userId, request.ImageFiles);
 
                 if (!convertedContentResponse.Success)
                 {
@@ -342,9 +372,11 @@ public class SharedService : ISharedService
                 }
 
                 userPost = existingPost;
-            } else
+            }
+            // 2. add
+            else
             {
-                var convertedContentResponse = await ConvertContent(model.Content, userId, model.ImageFiles);
+                var convertedContentResponse = await ConvertContent(request.Content, userId, request.ImageFiles);
 
                 if (!convertedContentResponse.Success)
                 {
@@ -361,18 +393,40 @@ public class SharedService : ISharedService
                 userPost = new UserPost
                 {
                     UserId = userId,
-                    Title = model.Title,
-                    Type = model.Type,
-                    Category = model.Category,
-                    CategoryCD = model.CategoryCD,
-                    Location = model.Location,
-                    LocationCD = model.LocationCD,
-                    StartDate = model.StartDate,
-                    EndDate = model.EndDate,
+                    Title = request.Title,
+                    Type = request.Type,
+                    Category = request.Category,
+                    CategoryCD = request.CategoryCD,
+                    Location = request.Location,
+                    LocationCD = request.LocationCD,
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
                     Content = content,
                     CreatedDate = DateTime.Now,
                     LastUpdatedDate = DateTime.Now
                 };
+
+                if (request.MainImageFile != null && request.MainImageFile.Content.Length > 0)
+                {
+                    var folderPath = $"content/{userId}";
+
+                    var uploadResult = await _fileService.UploadFile(request.MainImageFile, folderPath);
+
+                    if (uploadResult.Success)
+                    {
+                        userPost.MainImageStoragePath = uploadResult.Data.S3Path;
+                        userPost.MainImagePublicUrl = uploadResult.Data.CloudFrontUrl;
+                    }
+                    else
+                    {
+                        return new ServiceResponse<int>
+                        {
+                            Success = false,
+                            Code = uploadResult.Code,
+                            Message = uploadResult.Message
+                        };
+                    }
+                }
 
                 _context.UserPosts.Add(userPost);
                 await _context.SaveChangesAsync();

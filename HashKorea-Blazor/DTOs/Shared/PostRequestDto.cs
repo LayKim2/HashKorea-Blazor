@@ -32,6 +32,9 @@ public class PostRequestDto
     [StringLength(200, MinimumLength = 1)]
     public string Title { get; set; }
 
+    public string? MainImageUrl { get; set; }
+    public MultipartFile? MainImageFile { get; set; }
+
     // TO DO: add required
     //[Required]
     public string Content { get; set; } = string.Empty;

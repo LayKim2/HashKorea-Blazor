@@ -37,7 +37,7 @@
                 <!-- Period -->
                 <MudItem xs="12" md="4" Class="mb-2">
                     <MudDateRangePicker Label="Period"
-                                        Color="Color.Info"
+                                        Color="MudBlazor.Color.Info"
                                         Required="true"
                                         DateFormat="MM/dd/yyyy"
                                         AdornmentIcon="@Icons.Material.Filled.CalendarToday"
@@ -71,6 +71,29 @@
                         }
                     </MudSelect>
                 </MudItem>
+
+                <MudItem xs="12" md="12" Class="mb-2">
+                    <label class="form-label">Main Image</label>
+
+                    <InputFile OnChange="OnImageSelected" Accept="image/*" />
+
+                    <div class="mt-2">
+                        @if (!string.IsNullOrEmpty(model.MainImageUrl))
+                        {
+                            <div class="d-flex align-items-center gap-2">
+                                <img src="@model.MainImageUrl"
+                                alt="Preview"
+                                style="width: 200px; height: 112px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
+                                <button type="button" class="btn btn-danger btn-sm" @onclick="RemoveImage">X</button>
+                            </div>
+                        }
+                        else
+                        {
+                            <small class="text-muted">No image selected.</small>
+                        }
+                    </div>
+                </MudItem>
+
             </MudGrid>
 
             <!-- Title -->
@@ -84,7 +107,7 @@
             <!-- Save  -->
             <MudItem Class="d-flex justify-end mt-4">
                 <MudCardActions>
-                    <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" ButtonType="MudBlazor.ButtonType.Submit">Save</MudButton>
+                    <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Primary" ButtonType="MudBlazor.ButtonType.Submit">Save</MudButton>
                 </MudCardActions>
             </MudItem>
         </EditForm>
@@ -179,7 +202,6 @@
         }
     }
 
-
     private async Task LoadExistingPost(int postId)
     {
         var response = await SharedService.GetPostEdit(postId);
@@ -189,6 +211,7 @@
             var existingPost = response.Data;
 
             model.PostId = existingPost.Id;
+            model.MainImageUrl = existingPost.MainImageStoragePath;
             model.Type = existingPost.Type;
             model.Category = existingPost.Category;
             model.CategoryCD = existingPost.CategoryCD;
@@ -227,9 +250,34 @@
         StateHasChanged();
     }
 
+    private async Task OnImageSelected(InputFileChangeEventArgs e)
+    {
+        var buffer = await ResizeImage(e.File);
+
+        model.MainImageUrl = await JSRuntime.InvokeAsync<string>("createBlobUrlFromBuffer", buffer, "image/jpeg");
+    }
+
+    private async Task<byte[]> ResizeImage(IBrowserFile file)
+    {
+        var resizedImage = await file.RequestImageFileAsync(
+            "image/jpeg",
+            400,
+            225   // 16:9
+        );
+
+        using var stream = resizedImage.OpenReadStream();
+        var buffer = new byte[resizedImage.Size];
+        await stream.ReadAsync(buffer);
+        return buffer;
+    }
+
+    private void RemoveImage()
+    {
+        model.MainImageUrl = null;
+    }
+
     private async Task SavePost()
     {
-
         try
         {
             isLoading = true;
@@ -240,6 +288,8 @@
 
             model.Content = updatedContent;
             model.ImageFiles = imageFiles;
+
+            await SetMainImageFile();
 
             var response = await SharedService.UpdatePost(model);
             if (response.Success)
@@ -259,6 +309,37 @@
         finally
         {
             isLoading = false;
+        }
+    }
+
+    private async Task SetMainImageFile()
+    {
+        try
+        {
+            if (string.IsNullOrEmpty(model.MainImageUrl))
+            {
+                model.MainImageFile = null;
+            }
+            else if (model.MainImageUrl.Contains("blob"))
+            {
+                var blob = await JSRuntime.InvokeAsync<byte[]>("fetchBlobData", model.MainImageUrl);
+                string fileName = $"mainImage_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+
+                model.MainImageFile = new MultipartFile
+                    {
+                        FileName = fileName,
+                        ContentType = "image/jpeg",
+                        Content = blob
+                    };
+            }
+            else
+            {
+                model.MainImageFile = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            model.MainImageFile = null;
         }
     }
 
