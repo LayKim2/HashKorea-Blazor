@@ -101,16 +101,19 @@ window.initTinyMCE = (selector, content = '') => {
             editor.on('init', function () {
 
                 const editorContainer = editor.getContainer();
-                const setEditorHeight = () => {
-                    const windowHeight = window.innerHeight;
-                    const offsetTop = editorContainer.getBoundingClientRect().top;
-                    const newHeight = windowHeight - offsetTop - 20; // Add padding/margin as needed
-                    editorContainer.style.height = `${newHeight}px`;
-                };
+                editorContainer.style.minHeight = '500px';
 
-                // Initialize and adjust height on window resize
-                setEditorHeight();
-                window.addEventListener('resize', setEditorHeight);
+                // set the height based on total screen
+                //const setEditorHeight = () => {
+                //    const windowHeight = window.innerHeight;
+                //    const offsetTop = editorContainer.getBoundingClientRect().top;
+                //    const newHeight = windowHeight - offsetTop - 20; // Add padding/margin as needed
+                //    editorContainer.style.height = `${newHeight}px`;
+                //};
+
+                //// Initialize and adjust height on window resize
+                //setEditorHeight();
+                //window.addEventListener('resize', setEditorHeight);
 
                 // Upload Image Custom Button
                 editor.ui.registry.addButton('uploadImageButton', {

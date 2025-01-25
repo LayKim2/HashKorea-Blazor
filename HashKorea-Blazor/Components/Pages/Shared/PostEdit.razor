@@ -27,92 +27,90 @@
     </div>
 </MudOverlay>
 
-<MudPaper Elevation="3" Class="pa-4" Style="height: 100vh; display: flex; flex-direction: column;">
-    <MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
-        <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
-            <DataAnnotationsValidator />
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
+    <EditForm Model="@model" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
                 @* <ValidationSummary/> *@
 
-            <MudGrid Spacing="2" Class="mb-1">
-                <!-- Period -->
-                <MudItem xs="12" md="4" Class="mb-2">
-                    <MudDateRangePicker Label="Period"
-                                        Color="MudBlazor.Color.Info"
-                                        Required="true"
-                                        DateFormat="MM/dd/yyyy"
-                                        AdornmentIcon="@Icons.Material.Filled.CalendarToday"
-                                        Variant="MudBlazor.Variant.Outlined"
-                                        Dense="true"
-                                        DateRange="model.DateRange"
-                                        DateRangeChanged="OnDateRangeChanged" />
-                </MudItem>
-
-                <!-- Location -->
-                <MudItem xs="12" md="4" Class="mb-2">
-                    <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn" Required="true"
-                               AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                               Value="model.LocationCD" ValueChanged="OnLocationChanged" For="@(() => model.LocationCD)">
-                        @foreach (var location in locations)
-                        {
-                            <MudSelectItem Value="@location.Code">@location.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-
-                <!-- Category -->
-                <MudItem xs="12" md="4" Class="mb-2">
-                    <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category" Required="true"
-                    AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
-                    Value="model.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => model.CategoryCD)">
-
-                        @foreach (var category in categories)
-                        {
-                            <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
-                        }
-                    </MudSelect>
-                </MudItem>
-
-                <MudItem xs="12" md="12" Class="mb-2">
-                    <label class="form-label">Main Image</label>
-
-                    <InputFile OnChange="OnImageSelected" Accept="image/*" />
-
-                    <div class="mt-2">
-                        @if (!string.IsNullOrEmpty(model.MainImageUrl))
-                        {
-                            <div class="d-flex align-items-center gap-2">
-                                <img src="@model.MainImageUrl"
-                                alt="Preview"
-                                style="width: 200px; height: 112px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
-                                <button type="button" class="btn btn-danger btn-sm" @onclick="RemoveImage">X</button>
-                            </div>
-                        }
-                        else
-                        {
-                            <small class="text-muted">No image selected.</small>
-                        }
-                    </div>
-                </MudItem>
-
-            </MudGrid>
-
-            <!-- Title -->
-            <MudTextField @bind-Value="model.Title" For="@(() => model.Title)" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-10"/>
-
-            <!-- TinyMCE -->
-            <MudItem Class="mb-2">
-                <textarea id="tinymceEditor"></textarea>
+        <MudGrid Spacing="2" Class="mb-1">
+            <!-- Period -->
+            <MudItem xs="12" md="4" Class="mb-2">
+                <MudDateRangePicker Label="Period"
+                                    Color="MudBlazor.Color.Info"
+                                    Required="true"
+                                    DateFormat="MM/dd/yyyy"
+                                    AdornmentIcon="@Icons.Material.Filled.CalendarToday"
+                                    Variant="MudBlazor.Variant.Outlined"
+                                    Dense="true"
+                                    DateRange="model.DateRange"
+                                    DateRangeChanged="OnDateRangeChanged" />
             </MudItem>
 
-            <!-- Save  -->
-            <MudItem Class="d-flex justify-end mt-4">
-                <MudCardActions>
-                    <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Primary" ButtonType="MudBlazor.ButtonType.Submit">Save</MudButton>
-                </MudCardActions>
+            <!-- Location -->
+            <MudItem xs="12" md="4" Class="mb-2">
+                <MudSelect T="string" Label="Location" AdornmentIcon="@Icons.Material.Filled.LocationOn" Required="true"
+                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                           Value="model.LocationCD" ValueChanged="OnLocationChanged" For="@(() => model.LocationCD)">
+                    @foreach (var location in locations)
+                    {
+                        <MudSelectItem Value="@location.Code">@location.Name</MudSelectItem>
+                    }
+                </MudSelect>
             </MudItem>
-        </EditForm>
-    </MudContainer>
-</MudPaper>
+
+            <!-- Category -->
+            <MudItem xs="12" md="4" Class="mb-2">
+                <MudSelect T="string" Label="Category" AdornmentIcon="@Icons.Material.Filled.Category" Required="true"
+                           AnchorOrigin="Origin.BottomCenter" Variant="MudBlazor.Variant.Outlined" Dense="true" Clearable
+                           Value="model.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => model.CategoryCD)">
+
+                    @foreach (var category in categories)
+                    {
+                        <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+
+            <MudItem xs="12" md="12" Class="mb-2">
+                <label class="form-label">Main Image</label>
+
+                <InputFile OnChange="OnImageSelected" Accept="image/*" />
+
+                <div class="mt-2">
+                    @if (!string.IsNullOrEmpty(model.MainImageUrl))
+                    {
+                        <div class="d-flex align-items-center gap-2">
+                            <img src="@model.MainImageUrl"
+                                 alt="Preview"
+                                 style="width: 200px; height: 112px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
+                            <button type="button" class="btn btn-danger btn-sm" @onclick="RemoveImage">X</button>
+                        </div>
+                    }
+                    else
+                    {
+                        <small class="text-muted">No image selected.</small>
+                    }
+                </div>
+            </MudItem>
+
+        </MudGrid>
+
+        <!-- Title -->
+        <MudTextField @bind-Value="model.Title" For="@(() => model.Title)" Label="Title" Variant="MudBlazor.Variant.Outlined" Dense="true" Class="mb-10" />
+
+        <!-- TinyMCE -->
+        <MudItem Class="mb-2">
+            <textarea id="tinymceEditor"></textarea>
+        </MudItem>
+
+        <!-- Save  -->
+        <MudItem Class="d-flex justify-end mt-4">
+            <MudCardActions>
+                <MudButton Variant="MudBlazor.Variant.Filled" Color="MudBlazor.Color.Primary" ButtonType="MudBlazor.ButtonType.Submit">Save</MudButton>
+            </MudCardActions>
+        </MudItem>
+    </EditForm>
+</MudContainer>
 
 @code {
     [Parameter] public int? PostId { get; set; }
