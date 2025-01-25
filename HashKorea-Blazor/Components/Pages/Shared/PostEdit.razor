@@ -72,24 +72,45 @@
             </MudItem>
 
             <MudItem xs="12" md="12" Class="mb-2">
-                <label class="form-label">Main Image</label>
+                <div class="d-flex flex-column gap-2">
+                    <MudText Typo="Typo.subtitle1" Class="mb-1">Main Image</MudText>
 
-                <InputFile OnChange="OnImageSelected" Accept="image/*" />
-
-                <div class="mt-2">
-                    @if (!string.IsNullOrEmpty(model.MainImageUrl))
-                    {
-                        <div class="d-flex align-items-center gap-2">
-                            <img src="@model.MainImageUrl"
-                                 alt="Preview"
-                                 style="width: 200px; height: 112px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
-                            <button type="button" class="btn btn-danger btn-sm" @onclick="RemoveImage">X</button>
+                    <MudPaper Class="pa-4 d-flex flex-column gap-4" Elevation="0" Style="border: 2px dashed #ccc; border-radius: 8px;">
+                        <div class="d-flex justify-center">
+                            <MudButton HtmlTag="label"
+                                       Color="Color.Primary"
+                                       Variant="MudBlazor.Variant.Outlined"
+                                       StartIcon="@Icons.Material.Filled.CloudUpload"
+                                       for="fileInput">
+                                Upload Image
+                                <InputFile id="fileInput"
+                                           OnChange="OnImageSelected"
+                                           Accept="image/*"
+                                           hidden />
+                            </MudButton>
                         </div>
-                    }
-                    else
-                    {
-                        <small class="text-muted">No image selected.</small>
-                    }
+
+                        <div class="mt-2">
+                            @if (!string.IsNullOrEmpty(model.MainImageUrl))
+                            {
+                                <div class="d-flex flex-column align-items-center gap-2">
+                                    <img src="@model.MainImageUrl"
+                                         alt="Preview"
+                                         style="width: 200px; height: 112px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   OnClick="RemoveImage" />
+                                </div>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2" Color="Color.Secondary" Align="Align.Center">
+                                    click to select
+                                </MudText>
+                            }
+                        </div>
+                    </MudPaper>
                 </div>
             </MudItem>
 
