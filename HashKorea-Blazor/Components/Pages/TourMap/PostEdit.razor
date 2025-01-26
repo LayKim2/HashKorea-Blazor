@@ -1,0 +1,25 @@
+﻿@* @attribute [Authorize] *@
+@rendermode InteractiveServer
+
+@page "/tourmap/post/add"
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+
+<div>
+    <input id="search-box" class="form-control mb-3" type="text" placeholder="Search places..." />
+    <button id="locate-btn" class="btn btn-primary mb-3">Show My Location</button>
+    <div id="map" style="height: 100vh; width: 100%;"></div>
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var apiKey = Configuration["GOOGLE_MAPS_API_KEY"];
+
+            await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap");
+        }
+    }
+}

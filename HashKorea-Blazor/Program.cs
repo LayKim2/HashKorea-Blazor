@@ -53,6 +53,7 @@ builder.Services.AddScoped<DialogService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();
+builder.Services.AddSingleton(builder.Configuration);
 
 // DBContext
 builder.Services.AddDbContext<DataContext>(options =>
