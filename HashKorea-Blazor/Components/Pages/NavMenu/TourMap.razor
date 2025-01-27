@@ -31,9 +31,6 @@
 
             var locationsJson = JsonSerializer.Serialize(locations);
 
-            Console.WriteLine(locationsJson);
-            // Load the Google Maps script and call the initMap function in JavaScript
-            // await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap");
             await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap", locationsJson);
         }
     }
