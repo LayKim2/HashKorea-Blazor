@@ -61,6 +61,7 @@ public class TourMapService : ITourMapService
                     Title = t.Title,
                     Lat = t.Lat,
                     Lng = t.Lng,
+                    Category = t.Category,
                     EnglishAddress = t.EnglishAddress,
                     KoreanAddress = t.KoreanAddress,
                 })
@@ -109,6 +110,8 @@ public class TourMapService : ITourMapService
                 Lng = request.Lng,
                 EnglishAddress = request.EnglishAddress,
                 KoreanAddress = request.KoreanAddress,
+                CategoryCD = request.CategoryCD,
+                Category = request.Category,
                 CreatedDate = DateTime.Now
             };
 

@@ -3,6 +3,7 @@
 public static class POST_TYPE
 {
     public const string PROMOTION = "Promotion";
+    public const string TOURMAP = "TourMap";
     public const string KOREAIS = "Korea Is";
     public const string NOTICE = "Notice";
     public const string FREEBOARD = "Free Board";
@@ -11,6 +12,7 @@ public static class POST_TYPE
     public static readonly string[] AllPostTypes =
     {
             PROMOTION,
+            TOURMAP,
             KOREAIS,
             NOTICE,
             FREEBOARD,

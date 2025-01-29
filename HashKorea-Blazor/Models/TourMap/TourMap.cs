@@ -19,8 +19,13 @@ public class TourMap
     public double Lng { get; set; }
     [Required]
     public string EnglishAddress { get; set; }
+    public string KoreanAddress { get; set; } = string.Empty;
     [Required]
-    public string KoreanAddress { get; set; }
+    public string Category { get; set; }
+    [Required]
+    public string CategoryCD { get; set; }
+    public string MainImagePublicUrl { get; set; } = string.Empty;
+    public string MainImageStoragePath { get; set; } = string.Empty;
 
     public DateTime CreatedDate { get; set; } = DateTime.Now;
 

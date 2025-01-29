@@ -1,0 +1,178 @@
+﻿@* @attribute [Authorize] *@
+@rendermode InteractiveServer
+
+@page "/tour-map/post/add"
+@using System.Text.Json
+@using HashKorea.Common.Constants
+@using HashKorea.DTOs.Shared
+@using HashKorea.DTOs.TourMap
+
+@inject IJSRuntime JSRuntime
+@inject IConfiguration Configuration
+@inject NavigationManager NavigationManager
+@inject ITourMapService TourMapService
+@inject ISharedService SharedService
+
+
+<MudContainer MaxWidth="MaxWidth.ExtraExtraLarge" Class="d-flex flex-column gap-2" Style="flex: 1;">
+    <EditForm Model="@request" OnValidSubmit="OnValidSubmit">
+        <DataAnnotationsValidator />
+        
+        <!-- Title Section -->
+        <MudGrid Spacing="3">
+            <MudItem xs="12">
+                <MudTextField Label="Title" T="string" @bind-Value="request.Title" For="@(() => request.Title)" Placeholder="Enter title" Variant="MudBlazor.Variant.Outlined" FullWidth />
+            </MudItem>
+            
+            <!-- Category Section -->
+            <MudItem xs="12">
+                <MudSelect T="string" Label="Category" Variant="MudBlazor.Variant.Outlined" FullWidth Required="true"
+                           Value="request.CategoryCD" ValueChanged="OnCategoryChanged" For="@(() => request.CategoryCD)">
+                    @foreach (var category in categories)
+                    {
+                        <MudSelectItem Value="@category.Code">@category.Name</MudSelectItem>
+                    }
+                </MudSelect>
+            </MudItem>
+            
+            <!-- Location Section -->
+            <MudItem xs="12">
+                <MudTextField id="search-box" Label="Search Location" T="string" Placeholder="Search for places..." Variant="MudBlazor.Variant.Outlined" FullWidth />
+            </MudItem>
+            
+            <!-- Map Section -->
+            <MudItem xs="12">
+                <div id="map" style="height: 70vh; width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"></div>
+            </MudItem>
+
+            <!-- Save Button Section -->
+            <MudItem xs="12">
+                <div class="d-flex justify-content-center">
+                    <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="SavePin">
+                        Add Pin
+                    </MudButton>
+                </div>
+            </MudItem>
+        </MudGrid>
+    </EditForm>
+</MudContainer>
+
+
+@* <div class="container py-5">
+
+    <!-- Title Section -->
+    <div class="mb-4">
+        <label for="title" class="form-label h5 text-primary">Title</label>
+        <input id="title" class="form-control shadow-sm" type="text" @bind="request.Title" placeholder="Enter title" />
+    </div>
+
+    <!-- Category Section -->
+    <div class="mb-4">
+        <label for="category" class="form-label h5 text-primary">Category</label>
+        <select id="category" class="form-select shadow-sm">
+            @foreach (var category in categories)
+            {
+                <option value="@category.Code">@category.Name</option>
+            }
+        </select>
+    </div>
+
+    <!-- Location Search Section -->
+    <div class="mb-4">
+        <label for="location" class="form-label h5 text-primary">Search Location</label>
+        <input id="search-box" class="form-control mb-3 shadow-sm" type="text" placeholder="Search for places..." />
+        <div id="map" style="height: 70vh; width: 100%; border-radius: 10px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);"></div>
+    </div>
+
+    <!-- Save Button Section -->
+    <div class="d-flex justify-content-center">
+        <button class="btn btn-primary btn-lg px-5 py-3 shadow-sm" @onclick="SavePin">
+            <i class="bi bi-save"></i> Add Pin
+        </button>
+    </div>
+</div> *@
+
+@code {
+    private TourMapRequestDto request = new TourMapRequestDto();
+
+    private List<GetCommonCodeResponseDto> categories = new();
+
+    bool success;
+
+    private void OnCategoryChanged(string selectedCode)
+    {
+        request.SetCategory(selectedCode, categories);
+    }
+
+    // Load Google Maps and set up the search box
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var apiKey = Configuration["GOOGLE_MAPS_API_KEY"];
+
+            List<Location> locations = new List<Location>();
+
+            var locationsJson = JsonSerializer.Serialize(locations);
+
+            await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap", locationsJson);
+
+            await LoadCategories();
+        }
+    }
+
+    private async Task LoadCategories()
+    {
+        var response = await SharedService.GetCommonCodes(POST_TYPE.TOURMAP);
+        if (response.Success && response.Data != null)
+        {
+            categories = response.Data.Where(cc => cc.Type == POST_TYPE.TOURMAP).ToList();
+            StateHasChanged();
+        }
+    }
+
+
+    private async Task SavePin()
+    {
+        // Call JavaScript function to get the map center coordinates
+        var mapCenter = await JSRuntime.InvokeAsync<Location>("getMapCenter");
+
+        if (mapCenter == null)
+        {
+            return;
+        }
+
+        request.Lat = mapCenter.Lat;
+        request.Lng = mapCenter.Lng;
+        request.EnglishAddress = mapCenter.EnglishAddress;
+        request.KoreanAddress = mapCenter.KoreanAddress;
+
+        var response = await TourMapService.UpdateTourMap(request);
+
+        if (response.Success)
+        {
+            NavigationManager.NavigateTo("/tour-map");
+        }
+        else
+        {
+            // error message
+        }
+
+    }
+
+    public class Location
+    {
+        public string Title { get; set; }
+        public double Lat { get; set; }
+        public double Lng { get; set; }
+        public string EnglishAddress { get; set; }
+        public string KoreanAddress { get; set; }
+    }
+
+    private async void OnValidSubmit(EditContext context)
+    {
+        success = true;
+        await SavePin();
+    }
+
+}

@@ -54,7 +54,7 @@ function initializeMapWithSearchOnly(apiKey, elementId) {
         }
 
         return {
-            title: selectedLocation.title,
+            //title: selectedLocation.title,
             lat: selectedLocation.lat,
             lng: selectedLocation.lng,
             englishAddress: selectedLocation.address,
@@ -104,7 +104,9 @@ function initializeMapWithSearchOnly(apiKey, elementId) {
                         },
                         (results, status) => {
                             if (status === 'OK') {
-                                resolve(results[0].formatted_address);
+                                const result = results[0];
+                                const detailedAddress = result.formatted_address;
+                                resolve(detailedAddress);
                             } else {
                                 resolve(place.formatted_address || '');
                             }
@@ -113,7 +115,7 @@ function initializeMapWithSearchOnly(apiKey, elementId) {
                 });
 
                 selectedLocation = {
-                    title: place.name,
+                    //title: place.name,
                     lat: place.geometry.location.lat(),
                     lng: place.geometry.location.lng(),
                     address: place.formatted_address || '',
@@ -159,17 +161,26 @@ function initializeMap(apiKey, elementId, locations) {
 
     locations.forEach(async function (location) {
 
-        const defaultIcon = {
-            url: '/festival.png',
-            scaledSize: new google.maps.Size(32, 32),
-            animation: google.maps.Animation.DROP
-        };
+        let defaultIcon;
+        if (location.Category === "Tourism") {
+            defaultIcon = {
+                url: '/tourism.png',
+                scaledSize: new google.maps.Size(32, 32),
+                animation: google.maps.Animation.DROP
+            };
+        } else if (location.Category === "Restaurant") {
+            defaultIcon = {
+                url: '/food.png',
+                scaledSize: new google.maps.Size(32, 32),
+                animation: google.maps.Animation.DROP
+            };
+        }
 
         const hoverIcon = {
-            url: '/festival.png',
-            scaledSize: new google.maps.Size(38, 38),
+            url: defaultIcon.url,
             scaledSize: new google.maps.Size(38, 38),
             transition: 'transform 0.3s ease-in-out'
+
         };
 
         const marker = new google.maps.Marker({
