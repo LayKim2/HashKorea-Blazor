@@ -2,10 +2,12 @@
 
 @page "/tour-map"
 @using System.Text.Json
+@using HashKorea.DTOs.TourMap
 
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration
 @inject NavigationManager NavigationManager
+@inject ITourMapService TourMapService
 
 <div>
     <button id="locate-btn" class="btn btn-primary mb-3">Show My Location</button>
@@ -14,15 +16,19 @@
 </div>
 
 @code {
-    // Location data to display on the map
-    private List<Location> locations = new List<Location>
-    {
-        new Location { Title = "Seoul City Hall", Lat = 37.5665, Lng = 126.9780, Address = "Seoul City Hall, 110 Sejong-daero, Jung-gu, Seoul, South Korea" },
-        new Location { Title = "Gangnam District, Seoul", Lat = 37.5172, Lng = 127.0473, Address = "Gangnam District, 1357-1 Gangnam-daero, Gangnam-gu, Seoul, South Korea" },
-        new Location { Title = "Haeundae Beach, Busan", Lat = 35.1586, Lng = 129.1603, Address = "Haeundae Beach, 141 Haeundaehaebyeon-ro, Haeundae-gu, Busan, South Korea" }
-    };
+
+    private List<GetTourMapsResponseDto> tourMaps = new List<GetTourMapsResponseDto>();
 
     private IJSObjectReference? _googleMapsModule;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await TourMapService.GetTourMaps();
+        if (response.Success)
+        {
+            tourMaps = response.Data;
+        }
+    }
 
     // OnAfterRenderAsync method to load Google Maps script and initialize map
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -31,37 +37,23 @@
         {
             var apiKey = Configuration["GOOGLE_MAPS_API_KEY"];
 
+            var locations = tourMaps.Select(map => new
+            {
+                Title = map.Title,
+                Lat = map.Lat,
+                Lng = map.Lng,
+                EnglishAddress = map.EnglishAddress,
+                KoreanAddress = map.KoreanAddress
+            }).ToList();
+
             var locationsJson = JsonSerializer.Serialize(locations);
 
             await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap", locationsJson);
         }
     }
 
-    // This method will be called once the map script is loaded
-    [JSInvokable]
-    public async Task InitializeMap()
-    {
-        // Convert the C# location list to a JavaScript-friendly object
-        var locationsJs = locations.Select(l => new
-        {
-            l.Title,
-            l.Lat,
-            l.Lng
-        }).ToList();
-
-        await JSRuntime.InvokeVoidAsync("initializeMapWithMarkers", locationsJs);
-    }
-
     private void NavigateToAddPin()
     {
         NavigationManager.NavigateTo("/tour-map/post/add", false);
-    }
-
-    public class Location
-    {
-        public string Title { get; set; }
-        public double Lat { get; set; }
-        public double Lng { get; set; }
-        public string Address { get; set; }
     }
 }

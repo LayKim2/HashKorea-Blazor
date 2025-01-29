@@ -3,17 +3,18 @@
 
 @page "/tour-map/post/add"
 @using System.Text.Json
+@using HashKorea.DTOs.TourMap
 
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration
+@inject NavigationManager NavigationManager
+@inject ITourMapService TourMapService
 
 <div>
     <input id="search-box" class="form-control mb-3" type="text" placeholder="Search places..." />
     <button class="btn btn-primary mb-3" @onclick="SavePin">Save Pin</button>
     <div id="map" style="height: 70vh; width: 100%;"></div>
 </div>
-
-<p><b>Selected Location:</b> @SelectedLocation?.Title</p>
 
 @code {
     private Location? SelectedLocation;
@@ -38,8 +39,29 @@
         // Call JavaScript function to get the map center coordinates
         var mapCenter = await JSRuntime.InvokeAsync<Location>("getMapCenter");
 
-        if (mapCenter == null) {
+        if (mapCenter == null)
+        {
             return;
+        }
+
+        var newTourMap = new TourMapRequestDto {
+            Title = mapCenter.Title,
+            Lat = mapCenter.Lat,
+            Lng = mapCenter.Lng,
+            EnglishAddress = mapCenter.EnglishAddress,
+            KoreanAddress = mapCenter.KoreanAddress
+        };
+
+
+        var response = await TourMapService.UpdateTourMap(newTourMap);
+
+        if (response.Success)
+        {
+            NavigationManager.NavigateTo("/tour-map");
+        }
+        else
+        {
+            // error message
         }
 
     }

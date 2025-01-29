@@ -24,6 +24,8 @@ public class DataContext : DbContext
     public DbSet<UserPostImage> UserPostImages { get; set; }
     #endregion
 
+    public DbSet<TourMap> TourMaps { get; set; }
+
 
     public DbSet<CommonCode> CommonCodes { get; set; }
     public DbSet<SystemLog> SystemLogs { get; set; }
