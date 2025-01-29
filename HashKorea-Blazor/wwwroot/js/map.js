@@ -4,8 +4,142 @@ let map;
 let searchBox;
 let userMarker;
 
+let currentClickedMarker = null;
+let selectedLocation = [];
+
 function initMap() {
-    initializeMap("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "map", window.locations);
+    if (window.locations && window.locations.length > 0) {
+        initializeMap("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "map", window.locations); // 기존 코드 그대로 사용
+    } else {
+        initializeMapWithSearchOnly("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "map"); // locations 없을 경우 검색만 활성화
+    }
+    
+}
+
+function initializeMapWithSearchOnly(apiKey, elementId) {
+
+    const mapElement = document.getElementById(elementId);
+
+    if (!mapElement) {
+        console.error("Map element not found");
+        return;
+    }
+
+    map = new google.maps.Map(mapElement, {
+        center: { lat: 37.5665, lng: 126.9780 }, // Default: Seoul, South Korea
+        zoom: 12,
+    });
+
+    const input = document.getElementById("search-box");
+    const options = {
+        componentRestrictions: { country: "KR" }, // Restrict search to South Korea
+    };
+    searchBox = new google.maps.places.SearchBox(input, options);
+
+    map.addListener("bounds_changed", () => {
+        searchBox.setBounds(map.getBounds());
+    });
+
+    const markers = [];
+
+    const clickedIcon = {
+        url: 'http://maps.google.com/mapfiles/ms/icons/blue-dot.png',
+        scaledSize: new google.maps.Size(32, 32)
+    };
+
+    window.getMapCenter = function () {
+
+        if (selectedLocation.length == 0) {
+            return null;
+        }
+
+        return {
+            title: selectedLocation.title,
+            lat: selectedLocation.lat,
+            lng: selectedLocation.lng,
+            englishAddress: selectedLocation.address,
+            koreanAddress: selectedLocation.koreanAddress,
+        };
+    };
+
+    searchBox.addListener("places_changed", async () => {
+        const places = searchBox.getPlaces();
+
+        if (places.length === 0) {
+            return;
+        }
+
+        markers.forEach((marker) => marker.setMap(null));
+        markers.length = 0;
+
+        const bounds = new google.maps.LatLngBounds();
+        for (const place of places) {
+            if (!place.geometry || !place.geometry.location) {
+                continue;
+            }
+
+            const marker = new google.maps.Marker({
+                map,
+                title: place.name,
+                position: place.geometry.location,
+            });
+
+            marker.addListener("click", async () => {
+
+                // init other pins selected
+                if (currentClickedMarker && currentClickedMarker !== marker) {
+                    currentClickedMarker.setIcon(null);
+                }
+
+                currentClickedMarker = marker;
+                marker.setIcon(clickedIcon);
+
+                // get korean address
+                const geocoder = new google.maps.Geocoder();
+                const koreanAddress = await new Promise((resolve, reject) => {
+                    geocoder.geocode(
+                        {
+                            address: place.formatted_address || '',
+                            language: 'ko',
+                        },
+                        (results, status) => {
+                            if (status === 'OK') {
+                                resolve(results[0].formatted_address);
+                            } else {
+                                resolve(place.formatted_address || '');
+                            }
+                        }
+                    );
+                });
+
+                selectedLocation = {
+                    title: place.name,
+                    lat: place.geometry.location.lat(),
+                    lng: place.geometry.location.lng(),
+                    address: place.formatted_address || '',
+                    koreanAddress: koreanAddress,
+                };
+
+                console.log("Clicked location added to locations array:", selectedLocation);
+            });
+
+            markers.push(marker);
+
+            if (place.geometry.viewport) {
+                bounds.union(place.geometry.viewport);
+            } else {
+                bounds.extend(place.geometry.location);
+            }
+        }
+        map.fitBounds(bounds);
+    });
+
+    const locateBtn = document.getElementById("locate-btn");
+    if (locateBtn) {
+        locateBtn.addEventListener("click", () => {
+            getUserLocation();
+        });
+    }
 }
 
 function initializeMap(apiKey, elementId, locations) {
@@ -64,6 +198,7 @@ function initializeMap(apiKey, elementId, locations) {
         const geocoder = new google.maps.Geocoder();
         const koreanAddress = await new Promise((resolve, reject) => {
             geocoder.geocode({
+                //location: { lat: location.Lat, lng: location.Lng }, 
                 address: location.Address,
                 language: 'ko'
             }, (results, status) => {
