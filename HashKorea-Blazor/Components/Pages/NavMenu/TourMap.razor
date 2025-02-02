@@ -5,21 +5,39 @@
 @using HashKorea.DTOs.TourMap
 @using HashKorea_Blazor.Components.Pages.Shared
 @using HashKorea_Blazor.Components.Pages.TourMap
+@using Microsoft.AspNetCore.Components.Authorization
+@using System.Security.Claims
 
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration
 @inject NavigationManager NavigationManager
 @inject ITourMapService TourMapService
 
-<div>
-    <button id="locate-btn" class="btn btn-primary mb-3">Show My Location</button>
-    <button @onclick="OpenModal" class="btn btn-secondary mb-3">Add Pin</button>
+@inject AuthenticationStateProvider AuthenticationStateProvider
 
-    <div id="map" style="height: 100vh; width: 100%;"></div>
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+        <!-- Show My Location -->
+        <button id="locate-btn" class="btn btn-primary">
+            <i class="fas fa-map-marker-alt"></i> Show My Location
+        </button>
+
+        <!-- Add Pin -->
+        @if (User.Identity?.IsAuthenticated == true)
+        {
+            <button @onclick="OpenModal" class="btn btn-success">
+                <i class="fas fa-thumbtack"></i> Add Pin
+            </button>
+        }
+    </div>
+
+    <!-- Map -->
+    <div id="map" class="rounded shadow" style="height: 85vh; width: 100%;"></div>
 </div>
 
 
-@if (isModalVisible)
+@if (User.Identity?.IsAuthenticated == true && isModalVisible)
 {
     <Modal Title="Add Pin to Tour Map" IsVisible="isModalVisible" OnClose="CloseModal">
         <ChildContent>
@@ -36,6 +54,8 @@
 
 
 @code {
+    private ClaimsPrincipal? User { get; set; }
+
     private List<GetTourMapsResponseDto> tourMaps = new List<GetTourMapsResponseDto>();
     
     private IJSObjectReference? _googleMapsModule;
@@ -70,6 +90,9 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var authState = await AuthenticationStateProvider.GetAuthenticationStateAsync();
+        User = authState.User;
+
         await LoadTourMaps();
     }
 
