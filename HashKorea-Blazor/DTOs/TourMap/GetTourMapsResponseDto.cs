@@ -9,4 +9,6 @@ public class GetTourMapsResponseDto
     public string Category { get; set; } = string.Empty;
     public string EnglishAddress { get; set; }
     public string KoreanAddress { get; set; }
+
+    public List<GetTourMapCommentResponseDto> Comments { get; set; } = new List<GetTourMapCommentResponseDto>();
 }

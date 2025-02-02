@@ -6,12 +6,6 @@
 
 @inject ITourMapService TourMapService
 
-
-
-
-
-
-
 <RadzenCard Class="p-4">
     <RadzenRow>
         <!-- Left Panel -->
@@ -33,13 +27,13 @@
                     <button class="btn btn-primary mt-2" @onclick="AddComment">Post</button>
                 </div>
 
-                @foreach (var comment in comments)
+                @foreach (var comment in tourMaps.Comments)
                 {
                     <div class="list-group-item d-flex align-items-center p-3 border rounded mb-2">
                         <span class="badge bg-primary rounded-circle p-3 me-3">@comment.Initial</span>
                         <div>
-                            <strong>@comment.User</strong>
-                            <p class="mb-0">@comment.Text</p>
+                            <strong>@comment.UserName</strong>
+                            <p class="mb-0">@comment.Comment</p>
                         </div>
                     </div>
                 }
@@ -104,13 +98,13 @@
             </div>
 
             <div class="list-group">
-                @foreach (var comment in comments)
+                @foreach (var comment in tourMaps.Comments)
                 {
                     <div class="list-group-item d-flex align-items-center p-3 border rounded mb-2">
                         <span class="badge bg-primary rounded-circle p-3 me-3">@comment.Initial</span>
                         <div>
-                            <strong>@comment.User</strong>
-                            <p class="mb-0">@comment.Text</p>
+                            <strong>@comment.UserName</strong>
+                            <p class="mb-0">@comment.Comment</p>
                         </div>
                     </div>
                 }
@@ -155,12 +149,13 @@
 </RadzenCard>
 
 @code {
-
     [Parameter] public int Id { get; set; }
+
+    private string newComment { get; set; } = string.Empty;
 
     private GetTourMapsResponseDto tourMaps = new GetTourMapsResponseDto();
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
         var response = await TourMapService.GetTourMapDetail(Id);
         if (response.Success)
@@ -170,71 +165,88 @@
     }
 
 
-    private List<string> images = new List<string>
-    {
-        "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA=",
-        "https://www.researchgate.net/publication/339627644/figure/fig5/AS:864653940883465@1583160972257/Dongdaemun-Design-Plaza-and-the-panels-of-envelope-URL-6.jpg",
-        "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA="
-    };
+    // private List<string> images = new List<string>
+    // {
+    //     "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA=",
+    //     "https://www.researchgate.net/publication/339627644/figure/fig5/AS:864653940883465@1583160972257/Dongdaemun-Design-Plaza-and-the-panels-of-envelope-URL-6.jpg",
+    //     "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA="
+    // };
 
-    private string currentImage;
+    // private string currentImage;
 
-    protected override void OnInitialized()
-    {
-        currentImage = images.FirstOrDefault(); // 첫 번째 이미지를 기본 이미지로 설정
-    }
+    // protected override void OnInitialized()
+    // {
+    //     currentImage = images.FirstOrDefault(); // 첫 번째 이미지를 기본 이미지로 설정
+    // }
 
-    private void ChangeImage(string newImage)
-    {
-        currentImage = newImage;
-    }
+    // private void ChangeImage(string newImage)
+    // {
+    //     currentImage = newImage;
+    // }
 
-    private void ShowPrevImage()
-    {
-        var currentIndex = images.IndexOf(currentImage);
-        if (currentIndex > 0)
-        {
-            currentImage = images[currentIndex - 1];
-        }
-    }
+    // private void ShowPrevImage()
+    // {
+    //     var currentIndex = images.IndexOf(currentImage);
+    //     if (currentIndex > 0)
+    //     {
+    //         currentImage = images[currentIndex - 1];
+    //     }
+    // }
 
-    private void ShowNextImage()
-    {
-        var currentIndex = images.IndexOf(currentImage);
-        if (currentIndex < images.Count - 1)
-        {
-            currentImage = images[currentIndex + 1];
-        }
-    }
+    // private void ShowNextImage()
+    // {
+    //     var currentIndex = images.IndexOf(currentImage);
+    //     if (currentIndex < images.Count - 1)
+    //     {
+    //         currentImage = images[currentIndex + 1];
+    //     }
+    // }
 
-    private string newComment { get; set; } = "";
-
-    private List<Comment> comments = new List<Comment>
-    {
-        new Comment { Initial = "P", User = "Plato Kim", Text = "Happy New Year!" },
-        new Comment { Initial = "L", User = "L", Text = "(kakao Pay) Fast Food First Payment" },
-        new Comment { Initial = "P", User = "Plato Kim", Text = "Sweety" },
-    };
+    
+    // private List<Comment> comments = new List<Comment>
+    // {
+    //     new Comment { Initial = "P", User = "Plato Kim", Text = "Happy New Year!" },
+    //     new Comment { Initial = "L", User = "L", Text = "(kakao Pay) Fast Food First Payment" },
+    //     new Comment { Initial = "P", User = "Plato Kim", Text = "Sweety" },
+    // };
 
     private List<Review> reviews = new List<Review>
     {
         new Review { Initial = "C", User = "Cassia Gorgazzi", Date = "a week ago", Text = "Really beautiful at night with all the lights. We went inside to interactive stuff, but I think my daughters were too old. Definitely geared towards the younger kids but it looked fun." },
     };
 
-    private void AddComment()
+    private async Task AddComment()
     {
         if (!string.IsNullOrWhiteSpace(newComment))
         {
-            comments.Add(new Comment { Initial = "U", User = "User", Text = newComment });
-            newComment = "";
-        }
-    }
+            var request = new TourMapCommentRequestDto
+                {
+                    TourMapId = tourMaps.Id,
+                    Comment = newComment
+                };
 
-    private class Comment
-    {
-        public string Initial { get; set; }
-        public string User { get; set; }
-        public string Text { get; set; }
+            var response = await TourMapService.AddTourMapComment(request);
+
+            if (response.Success)
+            {
+                newComment = string.Empty;
+
+                var comments = await TourMapService.GetTourMapComments(8);
+
+                if (comments.Success && comments.Data != null)
+                {
+                    tourMaps.Comments = comments.Data;
+                } 
+                else 
+                {
+
+                }
+            }
+            else
+            {
+
+            }
+        }
     }
 
     private class Review
