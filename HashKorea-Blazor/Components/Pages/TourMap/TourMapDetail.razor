@@ -231,7 +231,7 @@
             {
                 newComment = string.Empty;
 
-                var comments = await TourMapService.GetTourMapComments(8);
+                var comments = await TourMapService.GetTourMapComments(Id);
 
                 if (comments.Success && comments.Data != null)
                 {
