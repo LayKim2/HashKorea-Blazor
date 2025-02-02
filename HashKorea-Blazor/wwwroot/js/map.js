@@ -186,6 +186,7 @@ function initializeMap(apiKey, elementId, locations) {
         };
 
         const marker = new google.maps.Marker({
+            id: location.Id,
             position: { lat: location.Lat, lng: location.Lng },
             map: map,
             title: location.Title,
@@ -229,6 +230,14 @@ function initializeMap(apiKey, elementId, locations) {
                 <p style="margin: 4px 0 8px 0; font-size: 13px; color: #5f6368;">${location.EnglishAddress}</p>
                 <img src="${testImageUrl}" alt="${location.Title}" 
                      style="width: 100%; height: auto; max-height: 140px; object-fit: cover; border-radius: 8px;">
+        
+                <div style="margin-top: 12px;">
+                    <button onclick="window.location.href='/tourmap/${location.Id}'" 
+                            style="background-color: #4CAF50; color: white; border: none; padding: 8px 12px; font-size: 14px; 
+                                   border-radius: 4px; cursor: pointer; width: 100%; text-align: center;">
+                        View Details
+                    </button>
+                </div>
             </div>
         `;
 

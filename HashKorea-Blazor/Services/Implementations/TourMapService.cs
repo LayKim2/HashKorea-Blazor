@@ -81,6 +81,41 @@ public class TourMapService : ITourMapService
         return response;
     }
 
+    [AllowAnonymous]
+    public async Task<ServiceResponse<GetTourMapsResponseDto>> GetTourMapDetail(int Id)
+    {
+        var response = new ServiceResponse<GetTourMapsResponseDto>();
+
+        try
+        {
+            var tourMap = await _context.TourMaps
+                .Where(t => t.Id == Id)
+                .Select(t => new GetTourMapsResponseDto
+                {
+                    Id = t.Id,
+                    Title = t.Title,
+                    Lat = t.Lat,
+                    Lng = t.Lng,
+                    Category = t.Category,
+                    EnglishAddress = t.EnglishAddress,
+                    KoreanAddress = t.KoreanAddress,
+                })
+                .FirstOrDefaultAsync();
+
+            response.Success = true;
+            response.Data = tourMap;
+        }
+        catch (Exception ex)
+        {
+            response.Success = false;
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: GetTourMapDetail", ex.Message, "Fetching all tour maps.");
+        }
+
+        return response;
+    }
+
     [Authorize]
     public async Task<ServiceResponse<int>> UpdateTourMap(TourMapRequestDto request)
     {

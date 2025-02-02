@@ -1,11 +1,12 @@
-﻿@* @attribute [Authorize] *@
+﻿@attribute [Authorize]
 @rendermode InteractiveServer
 
-@page "/tour-map/post/add"
+@page "/tourmap/post/add"
 @using System.Text.Json
 @using HashKorea.Common.Constants
 @using HashKorea.DTOs.Shared
 @using HashKorea.DTOs.TourMap
+@using Microsoft.AspNetCore.Authorization
 
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration

@@ -1,0 +1,361 @@
+﻿@page "/tourmap/{Id:int}"
+
+@using HashKorea.DTOs.TourMap
+@using Radzen
+@using MudBlazor
+
+@inject ITourMapService TourMapService
+
+
+
+
+
+
+
+<RadzenCard Class="p-4">
+    <RadzenRow>
+        <!-- Left Panel -->
+        <RadzenColumn Size="4" Class="d-none d-md-block">
+            <RadzenImage Path="https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&amp;w=0&amp;k=20&amp;c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA=" Style="width: 100%; border-radius: 8px;" />
+
+            <div class="text-center mt-3">
+                <h3 class="text-dark fw-bold fs-3 lh-sm">@tourMaps.Title</h3>
+                <p class="text-muted fs-5 mt-2">@tourMaps.EnglishAddress</p>
+            </div>
+
+            <div class="list-group">
+                <h5>Comments</h5>
+
+                <!-- Comment Input -->
+                <div class="mt-3 p-3 border rounded">
+                    <label for="newComment" class="form-label">Add a Comment</label>
+                    <textarea id="newComment" class="form-control" rows="2" @bind="newComment"></textarea>
+                    <button class="btn btn-primary mt-2" @onclick="AddComment">Post</button>
+                </div>
+
+                @foreach (var comment in comments)
+                {
+                    <div class="list-group-item d-flex align-items-center p-3 border rounded mb-2">
+                        <span class="badge bg-primary rounded-circle p-3 me-3">@comment.Initial</span>
+                        <div>
+                            <strong>@comment.User</strong>
+                            <p class="mb-0">@comment.Text</p>
+                        </div>
+                    </div>
+                }
+
+            </div>
+        </RadzenColumn>
+
+        <!-- Right Panel (Desktop) -->
+        <RadzenColumn Size="8" Class="d-none d-md-block">
+            <MudTabs>
+                <MudTabPanel Text="Review" Class="p-0 mb-1">
+                    <div class="d-flex align-items-center mb-3">
+                        <h2 class="me-3">4.3</h2>
+                        <div>
+                            <div class="text-warning">★★★★★</div>
+                            <small>29,758 reviews</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mb-3">Write a Review</button>
+                    <div class="list-group">
+                        @foreach (var review in reviews)
+                        {
+                            <div class="list-group-item p-3 border rounded mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-secondary rounded-circle p-3 me-3">@review.Initial</span>
+                                    <div>
+                                        <strong>@review.User</strong>
+                                        <small class="text-muted">@review.Date</small>
+                                        <div class="text-warning">★★★★★</div>
+                                    </div>
+                                </div>
+                                <p class="mt-2">@review.Text</p>
+                            </div>
+                        }
+                    </div>
+                </MudTabPanel>
+                <MudTabPanel Text="Blog" Class="p-0 mb-1">
+                    <p>블로그 관련 내용 표시 영역</p>
+                </MudTabPanel>
+            </MudTabs>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Mobile Review & Blog Tabs -->
+    <div class="d-block d-md-none mt-4">
+        <RadzenColumn Size="12">
+            <RadzenImage Path="https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&amp;w=0&amp;k=20&amp;c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA=" Style="width: 100%; border-radius: 8px;" />
+            <div class="text-center mt-3">
+                <h3 class="text-dark fw-bold fs-3 lh-sm">@tourMaps.Title</h3>
+                <p class="text-muted fs-5 mt-2">@tourMaps.EnglishAddress</p>
+            </div>
+        </RadzenColumn>
+
+        <!-- Mobile Comments Section -->
+        <MudExpansionPanel Text="Comments" Class="mt-4">
+
+            <!-- Comment Input -->
+            <div class="mt-3 p-3 border rounded">
+                <label for="newComment" class="form-label">Add a Comment</label>
+                <textarea id="newComment" class="form-control" rows="2" @bind="newComment"></textarea>
+                <button class="btn btn-primary mt-2" @onclick="AddComment">Post</button>
+            </div>
+
+            <div class="list-group">
+                @foreach (var comment in comments)
+                {
+                    <div class="list-group-item d-flex align-items-center p-3 border rounded mb-2">
+                        <span class="badge bg-primary rounded-circle p-3 me-3">@comment.Initial</span>
+                        <div>
+                            <strong>@comment.User</strong>
+                            <p class="mb-0">@comment.Text</p>
+                        </div>
+                    </div>
+                }
+            </div>
+
+        </MudExpansionPanel>
+
+        <MudTabs>
+            <MudTabPanel Text="Review" Class="p-0 mb-1">
+                <div class="d-flex align-items-center mb-3">
+                    <h2 class="me-3">4.3</h2>
+                    <div>
+                        <div class="text-warning">★★★★★</div>
+                        <small>29,758 reviews</small>
+                    </div>
+                </div>
+                <button class="btn btn-primary mb-3">Write a Review</button>
+                <div class="list-group">
+                    @foreach (var review in reviews)
+                    {
+                        <div class="list-group-item p-3 border rounded mb-2">
+                            <div class="d-flex align-items-center">
+                                <span class="badge bg-secondary rounded-circle p-3 me-3">@review.Initial</span>
+                                <div>
+                                    <strong>@review.User</strong>
+                                    <small class="text-muted">@review.Date</small>
+                                    <div class="text-warning">★★★★★</div>
+                                </div>
+                            </div>
+                            <p class="mt-2">@review.Text</p>
+                        </div>
+                    }
+                </div>
+            </MudTabPanel>
+
+            <MudTabPanel Text="Blog" Class="p-0 mb-1">
+                <p>블로그 관련 내용 표시 영역</p>
+            </MudTabPanel>
+        </MudTabs>
+    </div>
+
+</RadzenCard>
+
+@code {
+
+    [Parameter] public int Id { get; set; }
+
+    private GetTourMapsResponseDto tourMaps = new GetTourMapsResponseDto();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var response = await TourMapService.GetTourMapDetail(Id);
+        if (response.Success)
+        {
+            tourMaps = response.Data;
+        }
+    }
+
+
+    private List<string> images = new List<string>
+    {
+        "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA=",
+        "https://www.researchgate.net/publication/339627644/figure/fig5/AS:864653940883465@1583160972257/Dongdaemun-Design-Plaza-and-the-panels-of-envelope-URL-6.jpg",
+        "https://media.istockphoto.com/id/1676101015/ko/%EC%82%AC%EC%A7%84/%EA%B2%BD%EB%B3%B5%EA%B6%81%EC%9D%80-%EC%84%9D%EC%96%91%EC%9D%B4-%EC%95%84%EB%A6%84%EB%8B%B5%EA%B3%A0-%EC%84%9C%EC%9A%B8-%EB%8C%80%ED%95%9C%EB%AF%BC%EA%B5%AD.jpg?s=612x612&w=0&k=20&c=gKZvvJAShxWls229xvzBJlCHJMJF9rOJn-yOYn1ACeA="
+    };
+
+    private string currentImage;
+
+    protected override void OnInitialized()
+    {
+        currentImage = images.FirstOrDefault(); // 첫 번째 이미지를 기본 이미지로 설정
+    }
+
+    private void ChangeImage(string newImage)
+    {
+        currentImage = newImage;
+    }
+
+    private void ShowPrevImage()
+    {
+        var currentIndex = images.IndexOf(currentImage);
+        if (currentIndex > 0)
+        {
+            currentImage = images[currentIndex - 1];
+        }
+    }
+
+    private void ShowNextImage()
+    {
+        var currentIndex = images.IndexOf(currentImage);
+        if (currentIndex < images.Count - 1)
+        {
+            currentImage = images[currentIndex + 1];
+        }
+    }
+
+    private string newComment { get; set; } = "";
+
+    private List<Comment> comments = new List<Comment>
+    {
+        new Comment { Initial = "P", User = "Plato Kim", Text = "Happy New Year!" },
+        new Comment { Initial = "L", User = "L", Text = "(kakao Pay) Fast Food First Payment" },
+        new Comment { Initial = "P", User = "Plato Kim", Text = "Sweety" },
+    };
+
+    private List<Review> reviews = new List<Review>
+    {
+        new Review { Initial = "C", User = "Cassia Gorgazzi", Date = "a week ago", Text = "Really beautiful at night with all the lights. We went inside to interactive stuff, but I think my daughters were too old. Definitely geared towards the younger kids but it looked fun." },
+    };
+
+    private void AddComment()
+    {
+        if (!string.IsNullOrWhiteSpace(newComment))
+        {
+            comments.Add(new Comment { Initial = "U", User = "User", Text = newComment });
+            newComment = "";
+        }
+    }
+
+    private class Comment
+    {
+        public string Initial { get; set; }
+        public string User { get; set; }
+        public string Text { get; set; }
+    }
+
+    private class Review
+    {
+        public string Initial { get; set; }
+        public string User { get; set; }
+        public string Date { get; set; }
+        public string Text { get; set; }
+    }
+}
+
+
+
+
+@* <RadzenCard Class="p-4">
+    <RadzenRow>
+        <!-- Default Info Section -->
+        <RadzenColumn Size="12" Class="mb-4">
+            <RadzenColumn Size="12" Class="mb-4">
+                <RadzenImage Path="@currentImage"
+                             Style="width: 100%; max-width: 500px; border-radius: 8px; display: block; margin: 0 auto;" />
+            </RadzenColumn>
+
+            @if (images.Count > 1)
+            {
+                <div class="d-flex justify-content-between mt-3">
+                    <button @onclick="ShowPrevImage" class="btn btn-light">
+                        <i class="bi bi-chevron-left"></i>
+                    </button>
+                    <div class="d-flex">
+                        @foreach (var image in images)
+                        {
+                            <RadzenImage Path="@image"
+                                         Class="img-thumbnail me-2"
+                                         Style="width: 100px; cursor: pointer;"
+                                         @onclick="() => ChangeImage(image)" />
+                        }
+                    </div>
+                    <button @onclick="ShowNextImage" class="btn btn-light">
+                        <i class="bi bi-chevron-right"></i>
+                    </button>
+                </div>
+            }
+            else
+            {
+                <div class="d-flex justify-content-center mt-3">
+                    @foreach (var image in images)
+                    {
+                        <RadzenImage Path="@image"
+                                     Class="img-thumbnail me-2"
+                                     Style="width: 100px; cursor: pointer;"
+                                     @onclick="() => ChangeImage(image)" />
+                    }
+                </div>
+            }
+
+            <div class="text-center mt-3">
+                <h3 class="text-dark fw-bold fs-3 lh-sm">Seoul City Hall</h3>
+                <p class="text-muted fs-5 mt-2">110 Sejong-daero, Jung-gu, Seoul, South Korea</p>
+            </div>
+        </RadzenColumn>
+
+        <!-- Comment Section -->
+        <RadzenColumn Size="12">
+            <MudExpansionPanel Text="Comments" Class="mt-4">
+                <div class="mt-3 p-3 border rounded">
+                    <label for="newComment" class="form-label">Add a Comment</label>
+                    <textarea id="newComment" class="form-control" rows="2" @bind="newComment"></textarea>
+                    <button class="btn btn-primary mt-2" @onclick="AddComment">Post</button>
+                </div>
+
+                <div class="list-group">
+                    @foreach (var comment in comments)
+                    {
+                        <div class="list-group-item d-flex align-items-center p-3 border rounded mb-2">
+                            <span class="badge bg-primary rounded-circle p-3 me-3">@comment.Initial</span>
+                            <div>
+                                <strong>@comment.User</strong>
+                                <p class="mb-0">@comment.Text</p>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </MudExpansionPanel>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Review AND Blog Section -->
+    <RadzenRow>
+        <RadzenColumn Size="12" md="6">
+            <MudTabs>
+                <MudTabPanel Text="Review">
+                    <div class="d-flex align-items-center mb-3">
+                        <h2 class="me-3">4.3</h2>
+                        <div>
+                            <div class="text-warning">★★★★★</div>
+                            <small>29,758 reviews</small>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary mb-3">Write a Review</button>
+                    <div class="list-group">
+                        @foreach (var review in reviews)
+                        {
+                            <div class="list-group-item p-3 border rounded mb-2">
+                                <div class="d-flex align-items-center">
+                                    <span class="badge bg-secondary rounded-circle p-3 me-3">@review.Initial</span>
+                                    <div>
+                                        <strong>@review.User</strong>
+                                        <small class="text-muted">@review.Date</small>
+                                        <div class="text-warning">★★★★★</div>
+                                    </div>
+                                </div>
+                                <p class="mt-2">@review.Text</p>
+                            </div>
+                        }
+                    </div>
+                </MudTabPanel>
+                <MudTabPanel Text="Blog">
+                    <p>블로그 관련 내용 표시 영역</p>
+                </MudTabPanel>
+            </MudTabs>
+        </RadzenColumn>
+    </RadzenRow>
+</RadzenCard> *@

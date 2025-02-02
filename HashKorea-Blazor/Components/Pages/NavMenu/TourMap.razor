@@ -1,6 +1,6 @@
 ﻿@rendermode InteractiveServer
 
-@page "/tour-map"
+@page "/tourmap"
 @using System.Text.Json
 @using HashKorea.DTOs.TourMap
 @using HashKorea_Blazor.Components.Pages.Shared
@@ -75,6 +75,7 @@
 
         var locations = tourMaps.Select(map => new
         {
+            Id = map.Id,
             Title = map.Title,
             Category = map.Category,
             Lat = map.Lat,
