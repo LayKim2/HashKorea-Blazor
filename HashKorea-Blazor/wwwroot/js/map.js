@@ -11,7 +11,7 @@ function initMap() {
     if (window.locations && window.locations.length > 0) {
         initializeMap("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "map", window.locations); // 기존 코드 그대로 사용
     } else {
-        initializeMapWithSearchOnly("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "map"); // locations 없을 경우 검색만 활성화
+        initializeMapWithSearchOnly("AIzaSyBo1iPI7wSqNQkL9f2QsLpmZ_We5n7xs1g", "addMap"); // locations 없을 경우 검색만 활성화
     }
     
 }
@@ -36,9 +36,11 @@ function initializeMapWithSearchOnly(apiKey, elementId) {
     };
     searchBox = new google.maps.places.SearchBox(input, options);
 
-    map.addListener("bounds_changed", () => {
-        searchBox.setBounds(map.getBounds());
-    });
+    if (map) {
+        map.addListener("bounds_changed", () => {
+            searchBox.setBounds(map.getBounds());
+        });
+    }
 
     const markers = [];
 

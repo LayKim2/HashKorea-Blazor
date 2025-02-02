@@ -177,3 +177,13 @@ function fetchBlobData(blobUrl) {
             return base64String;
         });
 }
+
+
+// 3. popup
+function addBodyClass(className) {
+    document.body.classList.add(className);
+}
+
+function removeBodyClass(className) {
+    document.body.classList.remove(className);
+}

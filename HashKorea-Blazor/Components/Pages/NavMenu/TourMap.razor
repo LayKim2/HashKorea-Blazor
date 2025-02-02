@@ -3,6 +3,8 @@
 @page "/tour-map"
 @using System.Text.Json
 @using HashKorea.DTOs.TourMap
+@using HashKorea_Blazor.Components.Pages.Shared
+@using HashKorea_Blazor.Components.Pages.TourMap
 
 @inject IJSRuntime JSRuntime
 @inject IConfiguration Configuration
@@ -11,17 +13,34 @@
 
 <div>
     <button id="locate-btn" class="btn btn-primary mb-3">Show My Location</button>
-    <button @onclick="NavigateToAddPin" class="btn btn-secondary mb-3">Add Pin</button>
+    <button @onclick="OpenModal" class="btn btn-secondary mb-3">Add Pin</button>
+
     <div id="map" style="height: 100vh; width: 100%;"></div>
 </div>
 
+
+@if (isModalVisible)
+{
+    <Modal Title="Add Pin to Tour Map" IsVisible="isModalVisible" OnClose="CloseModal">
+        <ChildContent>
+            <TourMapEdit @ref="TourMapEditInstance" shouldInitializeMap="shouldInitializeMap" OnClose="CloseModal" OnSave="HandleSavePin" />
+        </ChildContent>
+        <FooterContent>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="() => TourMapEditInstance.SavePin()">
+                Add
+            </MudButton>
+        </FooterContent>
+    </Modal>
+}
+
+
+
 @code {
-
     private List<GetTourMapsResponseDto> tourMaps = new List<GetTourMapsResponseDto>();
-
+    
     private IJSObjectReference? _googleMapsModule;
 
-    protected override async Task OnInitializedAsync()
+    private async Task LoadTourMaps()
     {
         var response = await TourMapService.GetTourMaps();
         if (response.Success)
@@ -30,31 +49,67 @@
         }
     }
 
-    // OnAfterRenderAsync method to load Google Maps script and initialize map
+    private async Task InitializeMap()
+    {
+        var apiKey = Configuration["GOOGLE_MAPS_API_KEY"];
+
+        var locations = tourMaps.Select(map => new
+        {
+            Title = map.Title,
+            Category = map.Category,
+            Lat = map.Lat,
+            Lng = map.Lng,
+            EnglishAddress = map.EnglishAddress,
+            KoreanAddress = map.KoreanAddress
+        }).ToList();
+
+        var locationsJson = JsonSerializer.Serialize(locations);
+
+        await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap", locationsJson);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTourMaps();
+    }
+
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            var apiKey = Configuration["GOOGLE_MAPS_API_KEY"];
-
-            var locations = tourMaps.Select(map => new
-            {
-                Title = map.Title,
-                Category = map.Category,
-                Lat = map.Lat,
-                Lng = map.Lng,
-                EnglishAddress = map.EnglishAddress,
-                KoreanAddress = map.KoreanAddress
-            }).ToList();
-
-            var locationsJson = JsonSerializer.Serialize(locations);
-
-            await JSRuntime.InvokeVoidAsync("loadGoogleMapsScript", apiKey, "initMap", locationsJson);
+            await InitializeMap();
         }
     }
 
-    private void NavigateToAddPin()
+    #region modal
+
+    private TourMapEdit TourMapEditInstance { get; set; } // for modal
+
+    private bool isModalVisible = false;
+    private bool shouldInitializeMap = true;
+
+    private async Task OpenModal()
     {
-        NavigationManager.NavigateTo("/tour-map/post/add", false);
+        isModalVisible = true;
+        shouldInitializeMap = true;
+
+        // Prevent body from scrolling when modal is open
+        await JSRuntime.InvokeVoidAsync("addBodyClass", "modal-open");
     }
+
+    private async Task CloseModal()
+    {
+        isModalVisible = false;
+        shouldInitializeMap = false;
+        await JSRuntime.InvokeVoidAsync("removeBodyClass", "modal-open");
+    }
+
+    private async Task HandleSavePin()
+    {
+        await LoadTourMaps();
+        await InitializeMap();
+    }
+
+    #endregion
+
 }

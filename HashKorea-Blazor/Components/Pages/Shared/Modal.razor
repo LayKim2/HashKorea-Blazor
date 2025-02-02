@@ -1,0 +1,50 @@
+﻿<div class="modal modal-overlay" style="@(IsVisible ? "display: block;" : "display: none;")" tabindex="-1" role="dialog" aria-labelledby="modalLabel" aria-hidden="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <!-- Header -->
+            <div class="modal-header" style="cursor: move;">
+                <h5 class="modal-title">@Title</h5>
+                <button type="button" class="btn-close" aria-label="Close" @onclick="CloseModal"></button>
+            </div>
+
+            <!-- Body -->
+            <div class="modal-body">
+                @ChildContent
+            </div>
+
+            <!-- Footer -->
+            @if (ShowFooter)
+            {
+                <div class="modal-footer d-flex justify-content-center">
+                    @FooterContent
+                </div>
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public string Title { get; set; } = "Title";
+
+    [Parameter]
+    public bool IsVisible { get; set; }
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public RenderFragment ChildContent { get; set; }
+
+    [Parameter]
+    public bool ShowFooter { get; set; } = true;
+
+    [Parameter]
+    public RenderFragment FooterContent { get; set; }
+
+    private void CloseModal()
+    {
+        IsVisible = false;
+        OnClose.InvokeAsync();
+    }
+}
