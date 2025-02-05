@@ -1,8 +1,57 @@
 ﻿@page "/"
+@using System.Text
+@using System.Text.Json
 
 @* TO DO: Radzen - Carousel for image list*@
 
 @* TO DO: ContextMenu for Button *@
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+@inject IOpenAIService OpenAIService
+
+<h3>Chat with DeepSeek</h3>
+
+<div class="mb-3">
+    <textarea class="form-control" @bind="UserInput" rows="3" placeholder="Enter your question..." disabled="@IsLoading"></textarea>
+</div>
+
+<button class="btn btn-primary" @onclick="SendMessage" disabled="@IsLoading">
+    @(IsLoading ? "Waiting for response..." : "Send")
+</button>
+
+@if (!string.IsNullOrEmpty(ChatResponse))
+{
+    <div class="alert alert-info mt-3">
+        <strong>DeepSeek:</strong> @ChatResponse
+    </div>
+}
+
+@code {
+    private string UserInput { get; set; } = string.Empty;
+    private string ChatResponse { get; set; } = string.Empty;
+    private bool IsLoading { get; set; } = false;
+
+    private async Task SendMessage()
+    {
+        if (!string.IsNullOrWhiteSpace(UserInput))
+        {
+            IsLoading = true;
+            ChatResponse = "Fetching response...";
+            StateHasChanged();
+
+            try
+            {
+                ChatResponse = await OpenAIService.GetChatGPTResponse(UserInput);
+            }
+            catch (Exception ex)
+            {
+                ChatResponse = $"Error occurred: {ex.Message}";
+            }
+            finally
+            {
+                IsLoading = false;
+                StateHasChanged();
+            }
+        }
+    }
+}
+

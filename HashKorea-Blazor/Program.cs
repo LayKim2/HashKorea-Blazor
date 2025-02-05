@@ -22,6 +22,8 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddServiceDefaults();
 
+builder.Services.AddHttpClient();
+
 // when you use http request with other api in Service or razor
 builder.Services.AddHttpContextAccessor();
 
@@ -33,6 +35,7 @@ builder.Services.AddScoped<ILogService, LogService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 builder.Services.AddScoped<IFileService, FileService>();
 builder.Services.AddScoped<ITourMapService, TourMapService>();
+builder.Services.AddScoped<IOpenAIService, OpenAIService>();
 //builder.Services.AddSingleton<IMemoryManagementService, MemoryManagementService>(); // Redis 처리용 | 중앙에서 하나로 처리하므로 SingleTon으로 처리
 
 // mudblazor
