@@ -99,6 +99,8 @@ public class TourMapService : ITourMapService
                     Category = t.Category,
                     EnglishAddress = t.EnglishAddress,
                     KoreanAddress = t.KoreanAddress,
+                    AverageRating = t.AverageRating,
+                    NumberOfReviews = t.TourMapReviews.Count()
                 })
                 .FirstOrDefaultAsync();
 
