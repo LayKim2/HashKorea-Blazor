@@ -87,6 +87,8 @@
 
         if (response.Success)
         {
+            newReview = new();
+
             await OnSave.InvokeAsync();
             await CloseModal();
         }

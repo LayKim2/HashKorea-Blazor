@@ -74,7 +74,7 @@
                     <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
                         <MudButton OnClick="OpenModal">Write a Review</MudButton>
                     </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-                    
+
                     <div class="list-group">
                         @foreach (var review in tourMaps.Reviews)
                         {
@@ -105,7 +105,7 @@
                     </div>
                 </MudTabPanel>
                 <MudTabPanel Text="Blog" Class="p-0 mb-1">
-                    <p>블로그 관련 내용 표시 영역</p>
+                    <p>section of blog content</p>
                 </MudTabPanel>
             </MudTabs>
         </RadzenColumn>
@@ -175,7 +175,7 @@
                 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
                     <MudButton OnClick="OpenModal">Write a Review</MudButton>
                 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-                
+
                 <div class="list-group">
                     @foreach (var review in tourMaps.Reviews)
                     {
@@ -207,7 +207,7 @@
             </MudTabPanel>
 
             <MudTabPanel Text="Blog" Class="p-0 mb-1">
-                <p>블로그 관련 내용 표시 영역</p>
+                <p>section of blog content</p>
             </MudTabPanel>
         </MudTabs>
     </div>
@@ -234,13 +234,22 @@
 
     private GetTourMapsResponseDto tourMaps = new GetTourMapsResponseDto();
 
-    protected override async Task OnParametersSetAsync()
-    {
+    private async Task GetTourMapDetail() {
+
         var response = await TourMapService.GetTourMapDetail(Id);
-        if (response.Success)
+        if (response.Success && response.Data != null)
         {
             tourMaps = response.Data;
         }
+        else
+        {
+
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await GetTourMapDetail();
     }
 
     private async Task AddComment()
@@ -259,16 +268,7 @@
             {
                 newComment = string.Empty;
 
-                var comments = await TourMapService.GetTourMapComments(Id);
-
-                if (comments.Success && comments.Data != null)
-                {
-                    tourMaps.Comments = comments.Data;
-                } 
-                else 
-                {
-
-                }
+                await GetTourMapDetail();
             }
             else
             {
@@ -302,20 +302,11 @@
 
     private async Task HandleSavePin()
     {
-        // await LoadTourMaps();
-        // await InitializeMap();
+        await GetTourMapDetail();
     }
 
     #endregion
 
-
-    private class Review
-    {
-        public string Initial { get; set; }
-        public string User { get; set; }
-        public string Date { get; set; }
-        public string Text { get; set; }
-    }
 }
 
 
