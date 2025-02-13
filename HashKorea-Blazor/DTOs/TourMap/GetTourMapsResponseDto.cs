@@ -11,4 +11,5 @@ public class GetTourMapsResponseDto
     public string KoreanAddress { get; set; }
 
     public List<GetTourMapCommentResponseDto> Comments { get; set; } = new List<GetTourMapCommentResponseDto>();
+    public List<GetTourMapReviewResponseDto> Reviews { get; set; } = new List<GetTourMapReviewResponseDto>();
 }

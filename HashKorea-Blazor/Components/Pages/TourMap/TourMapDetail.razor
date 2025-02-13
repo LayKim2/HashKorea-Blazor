@@ -1,9 +1,11 @@
 ﻿@page "/tourmap/{Id:int}"
 
 @using HashKorea.DTOs.TourMap
+@using HashKorea_Blazor.Components.Pages.Shared
 @using Radzen
 @using MudBlazor
 
+@inject IJSRuntime JSRuntime
 @inject ITourMapService TourMapService
 
 <RadzenCard Class="p-4">
@@ -52,20 +54,35 @@
                             <small>29,758 reviews</small>
                         </div>
                     </div>
-                    <button class="btn btn-primary mb-3">Write a Review</button>
+                    <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+                        <MudButton OnClick="OpenModal">Write a Review</MudButton>
+                    </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+                    
                     <div class="list-group">
-                        @foreach (var review in reviews)
+                        @foreach (var review in tourMaps.Reviews)
                         {
                             <div class="list-group-item p-3 border rounded mb-2">
                                 <div class="d-flex align-items-center">
                                     <span class="badge bg-secondary rounded-circle p-3 me-3">@review.Initial</span>
                                     <div>
-                                        <strong>@review.User</strong>
-                                        <small class="text-muted">@review.Date</small>
-                                        <div class="text-warning">★★★★★</div>
+                                        <strong>@review.UserName</strong>
+                                        <small class="text-muted">@review.CreatedDateRelative</small>
+                                        <div class="text-warning">
+                                            @for (int i = 0; i < 5; i++)
+                                            {
+                                                if (i < review.Rating)
+                                                {
+                                                    <span>★</span>
+                                                }
+                                                else
+                                                {
+                                                    <span>☆</span>
+                                                }
+                                            }
+                                        </div>
                                     </div>
                                 </div>
-                                <p class="mt-2">@review.Text</p>
+                                <p class="mt-2">@review.Comment</p>
                             </div>
                         }
                     </div>
@@ -121,20 +138,35 @@
                         <small>29,758 reviews</small>
                     </div>
                 </div>
-                <button class="btn btn-primary mb-3">Write a Review</button>
+                <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+                    <MudButton OnClick="OpenModal">Write a Review</MudButton>
+                </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+                
                 <div class="list-group">
-                    @foreach (var review in reviews)
+                    @foreach (var review in tourMaps.Reviews)
                     {
                         <div class="list-group-item p-3 border rounded mb-2">
                             <div class="d-flex align-items-center">
                                 <span class="badge bg-secondary rounded-circle p-3 me-3">@review.Initial</span>
                                 <div>
-                                    <strong>@review.User</strong>
-                                    <small class="text-muted">@review.Date</small>
-                                    <div class="text-warning">★★★★★</div>
+                                    <strong>@review.UserName</strong>
+                                    <small class="text-muted">@review.CreatedDateRelative</small>
+                                    <div class="text-warning">
+                                        @for (int i = 0; i < 5; i++)
+                                        {
+                                            if (i < review.Rating)
+                                            {
+                                                <span>★</span>
+                                            }
+                                            else
+                                            {
+                                                <span>☆</span>
+                                            }
+                                        }
+                                    </div>
                                 </div>
                             </div>
-                            <p class="mt-2">@review.Text</p>
+                            <p class="mt-2">@review.Comment</p>
                         </div>
                     }
                 </div>
@@ -147,6 +179,19 @@
     </div>
 
 </RadzenCard>
+
+<Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
+    <Modal Title="Review" IsVisible="isModalVisible" OnClose="CloseModal">
+        <ChildContent>
+            <TourMapReview @ref="TourMapReviewInstance" TourMapId="@Id" OnClose="CloseModal" OnSave="HandleSavePin" />
+        </ChildContent>
+        <FooterContent>
+            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="() => TourMapReviewInstance.AddReview()">
+                Review
+            </MudButton>
+        </FooterContent>
+    </Modal>
+</Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
     [Parameter] public int Id { get; set; }
@@ -210,10 +255,10 @@
     //     new Comment { Initial = "P", User = "Plato Kim", Text = "Sweety" },
     // };
 
-    private List<Review> reviews = new List<Review>
-    {
-        new Review { Initial = "C", User = "Cassia Gorgazzi", Date = "a week ago", Text = "Really beautiful at night with all the lights. We went inside to interactive stuff, but I think my daughters were too old. Definitely geared towards the younger kids but it looked fun." },
-    };
+    // private List<Review> reviews = new List<Review>
+    // {
+    //     new Review { Initial = "C", User = "Cassia Gorgazzi", Date = "a week ago", Text = "Really beautiful at night with all the lights. We went inside to interactive stuff, but I think my daughters were too old. Definitely geared towards the younger kids but it looked fun." },
+    // };
 
     private async Task AddComment()
     {
@@ -248,6 +293,38 @@
             }
         }
     }
+
+    #region modal
+
+    private TourMapReview TourMapReviewInstance { get; set; } // for modal
+
+    private bool isModalVisible = false;
+    private bool shouldInitializeMap = true;
+
+    private async Task OpenModal()
+    {
+        isModalVisible = true;
+        shouldInitializeMap = true;
+
+        // Prevent body from scrolling when modal is open
+        await JSRuntime.InvokeVoidAsync("addBodyClass", "modal-open");
+    }
+
+    private async Task CloseModal()
+    {
+        isModalVisible = false;
+        shouldInitializeMap = false;
+        await JSRuntime.InvokeVoidAsync("removeBodyClass", "modal-open");
+    }
+
+    private async Task HandleSavePin()
+    {
+        // await LoadTourMaps();
+        // await InitializeMap();
+    }
+
+    #endregion
+
 
     private class Review
     {

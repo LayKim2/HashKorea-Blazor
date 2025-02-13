@@ -31,7 +31,6 @@ public class TourMapService : ITourMapService
         return user != null;
     }
 
-    [Authorize]
     private async Task<int> GetUserId()
     {
         var authState = await _authStateProvider.GetAuthenticationStateAsync();
@@ -106,10 +105,16 @@ public class TourMapService : ITourMapService
             if (tourMap != null)
             {
                 var getComments = await GetTourMapComments(Id);
+                var getReviews = await GetTourMapReviews(Id);
 
                 if (getComments.Success && getComments.Data != null)
                 {
                     tourMap.Comments = getComments.Data;
+                }
+
+                if (getReviews.Success && getReviews.Data != null)
+                {
+                    tourMap.Reviews = getReviews.Data;
                 }
             }
 
@@ -274,5 +279,205 @@ public class TourMapService : ITourMapService
         return response;
     }
 
+
+    #region review
+    public async Task<ServiceResponse<List<GetTourMapReviewResponseDto>>> GetTourMapReviews(int tourMapId)
+    {
+        var response = new ServiceResponse<List<GetTourMapReviewResponseDto>>();
+
+        try
+        {
+            var currentUserId = await GetUserId();
+
+            var reviews = await _context.TourMapReviews
+                .Where(r => r.TourMapId == tourMapId)
+                .OrderByDescending(c => c.CreatedDate)
+                .Select(r => new GetTourMapReviewResponseDto
+                {
+                    Id = r.Id,
+                    UserName = r.User.Name,
+                    Initial = r.User.Name.Substring(0, 1),
+                    TourMapId = r.TourMapId,
+                    Comment = r.Comment,
+                    Rating = r.Rating,
+                    IsOwner = r.UserId == currentUserId,
+                    CreatedDate = r.CreatedDate
+                })
+                .ToListAsync();
+
+            response.Success = true;
+            response.Data = reviews;
+        }
+        catch (Exception ex)
+        {
+            response.Success = false;
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: GetTourMapReviews", ex.Message, "Fetching reviews");
+        }
+
+        return response;
+    }
+
+    [Authorize]
+    public async Task<ServiceResponse<int>> AddOrUpdateTourMapReview(TourMapReviewRequestDto request)
+    {
+        var response = new ServiceResponse<int>();
+
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var userId = await GetUserId();
+
+            if (userId == 0)
+            {
+                response.Success = false;
+                response.Code = MessageCode.Custom.NOT_FOUND_USER.ToString();
+                response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_USER];
+                return response;
+            }
+
+            TourMapReview review;
+
+            if (request.ReviewId.HasValue)
+            {
+                review = await _context.TourMapReviews
+                    .FirstOrDefaultAsync(r => r.Id == request.ReviewId.Value && r.UserId == userId);
+
+                if (review == null)
+                {
+                    response.Success = false;
+                    response.Code = MessageCode.Custom.NOT_FOUND_DATA.ToString();
+                    response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_DATA];
+                    return response;
+                }
+
+                review.TourMapId = request.TourMapId;
+                review.Comment = request.Comment;
+                review.Rating = request.Rating;
+                review.UpdatedDate = DateTime.UtcNow;
+            }
+            else
+            {
+                review = new TourMapReview
+                {
+                    UserId = userId,
+                    TourMapId = request.TourMapId,
+                    Comment = request.Comment,
+                    Rating = request.Rating,
+                    CreatedDate = DateTime.UtcNow
+                };
+
+                _context.TourMapReviews.Add(review);
+            }
+
+            await _context.SaveChangesAsync();
+
+            var tourMap = await _context.TourMaps
+                .FirstOrDefaultAsync(t => t.Id == request.TourMapId);
+
+            if (tourMap != null)
+            {
+                var totalReviews = await _context.TourMapReviews
+                    .Where(r => r.TourMapId == request.TourMapId)
+                    .CountAsync();
+
+                if (totalReviews > 0)
+                {
+                    var totalRating = await _context.TourMapReviews
+                        .Where(r => r.TourMapId == request.TourMapId)
+                        .SumAsync(r => r.Rating);
+
+                    tourMap.AverageRating = totalRating / totalReviews;
+                    await _context.SaveChangesAsync();
+                }
+                else
+                {
+                    tourMap.AverageRating = 0;
+                    await _context.SaveChangesAsync();
+                }
+            }
+
+            await transaction.CommitAsync();
+
+            response.Success = true;
+            response.Data = review.Id;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            response.Success = false;
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: AddOrUpdateTourMapReview", ex.Message, $"user id: {await GetUserId()}");
+        }
+
+        return response;
+    }
+
+
+    [Authorize]
+    public async Task<ServiceResponse<bool>> DeleteTourMapReview(int reviewId)
+    {
+        var response = new ServiceResponse<bool>();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+
+        try
+        {
+            var userId = await GetUserId();
+            var review = await _context.TourMapReviews.FirstOrDefaultAsync(r => r.Id == reviewId && r.UserId == userId);
+
+            if (review == null)
+            {
+                response.Success = false;
+                response.Code = MessageCode.Custom.NOT_FOUND_DATA.ToString();
+                response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_DATA];
+                return response;
+            }
+
+            _context.TourMapReviews.Remove(review);
+
+            var tourMap = await _context.TourMaps
+                .Include(t => t.TourMapReviews)
+                .FirstOrDefaultAsync(t => t.Id == review.TourMapId);
+
+            if (tourMap == null)
+            {
+                response.Success = false;
+                response.Code = MessageCode.Custom.NOT_FOUND_DATA.ToString();
+                response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_DATA];
+                return response;
+            }
+
+            var remainingReviews = tourMap.TourMapReviews.ToList();
+            if (remainingReviews.Any())
+            {
+                tourMap.AverageRating = remainingReviews.Average(r => r.Rating);
+            }
+            else
+            {
+                tourMap.AverageRating = 0; 
+            }
+
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+
+            response.Success = true;
+            response.Data = true;
+        }
+        catch (Exception ex)
+        {
+            await transaction.RollbackAsync();
+            response.Success = false;
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: DeleteTourMapReview", ex.Message, $"user id: {await GetUserId()}");
+        }
+
+        return response;
+    }
+
+    #endregion
 
 }

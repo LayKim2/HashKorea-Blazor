@@ -26,8 +26,11 @@ public class TourMap
     public string CategoryCD { get; set; }
     public string MainImagePublicUrl { get; set; } = string.Empty;
     public string MainImageStoragePath { get; set; } = string.Empty;
+    public double AverageRating { get; set; } = 0;
 
     public DateTime CreatedDate { get; set; } = DateTime.Now;
+    public virtual ICollection<TourMapComment> TourMapComments { get; set; } = new HashSet<TourMapComment>();
+    public virtual ICollection<TourMapReview> TourMapReviews { get; set; } = new HashSet<TourMapReview>();
 
     [ForeignKey("UserId")]
     public virtual User User { get; set; }

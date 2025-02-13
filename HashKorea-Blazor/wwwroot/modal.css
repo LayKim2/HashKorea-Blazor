@@ -47,3 +47,21 @@ body.modal-open {
     position: fixed;
     width: 100%;
 }
+
+
+
+/*star*/
+
+.stars {
+    font-size: 30px;
+    cursor: pointer;
+}
+
+.star {
+    color: #e0e0e0;
+    padding: 0 2px;
+}
+
+    .star.active {
+        color: #fbbc04;
+    }

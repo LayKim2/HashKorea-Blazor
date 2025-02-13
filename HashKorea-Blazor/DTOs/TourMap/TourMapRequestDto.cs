@@ -28,3 +28,20 @@ public class TourMapRequestDto
         CategoryCD = code;
     }
 }
+
+
+public class TourMapReviewRequestDto
+{
+    public int? ReviewId { get; set; }
+    [Required]
+    public int TourMapId { get; set; }
+    [Required]
+    public int UserId { get; set; }
+    [Required(ErrorMessage = "Please select a rating")]
+    [Range(1, 5, ErrorMessage = "Please rate your experience")]
+    public int Rating { get; set; } = 0;
+
+    [Required(ErrorMessage = "Please share your experience")]
+    [MinLength(10, ErrorMessage = "Review must be at least 10 characters long")]
+    public string Comment { get; set; } = string.Empty;
+}

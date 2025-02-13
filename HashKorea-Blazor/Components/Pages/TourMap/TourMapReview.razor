@@ -1,0 +1,94 @@
+﻿@attribute [Authorize]
+
+@rendermode InteractiveServer
+
+@using HashKorea.DTOs.TourMap
+@using Microsoft.AspNetCore.Authorization
+@inject ITourMapService TourMapService
+
+<EditForm Model="@newReview" OnValidSubmit="AddReview">
+    <DataAnnotationsValidator />
+
+    <div class="card p-3">
+        <div class="mb-3">
+            <div class="stars">
+                @for (int i = 1; i <= 5; i++)
+                {
+                    var rating = i;
+                    <span class="star @(rating <= newReview.Rating ? "active" : "")"
+                    @onclick="() => SetRating(rating)"
+                    @onmouseover="() => HandleMouseOver(rating)"
+                    @onmouseout="HandleMouseOut">
+                        ★
+                    </span>
+                }
+            </div>
+            <div class="text-danger">
+                <ValidationMessage For="@(() => newReview.Rating)" />
+            </div>
+        </div>
+
+        <div class="mb-3">
+            <InputTextArea @bind-Value="newReview.Comment"
+            class="form-control border-light"
+            placeholder="Share details of your own experience at this place"
+            rows="4" />
+            <div class="text-danger mt-1">
+                <ValidationMessage For="@(() => newReview.Comment)" />
+            </div>
+        </div>
+
+        <div>
+            <button type="button" class="btn btn-outline-primary w-100 text-start">
+                <i class="fas fa-camera me-2"></i>
+                Add photos & videos
+            </button>
+        </div>
+    </div>
+</EditForm>
+
+@code {
+    [Parameter] public int TourMapId { get; set; }
+    [Parameter] public EventCallback OnClose { get; set; }
+    [Parameter] public EventCallback OnSave { get; set; }
+
+    private TourMapReviewRequestDto newReview = new();
+
+    private int hoverRating = 0;
+
+    protected override void OnInitialized()
+    {
+        newReview.TourMapId = TourMapId;
+    }
+
+    private void SetRating(int rating)
+    {
+        newReview.Rating = rating;
+    }
+
+    private void HandleMouseOver(int rating)
+    {
+        hoverRating = rating;
+    }
+
+    private void HandleMouseOut()
+    {
+        hoverRating = 0;
+    }
+
+    private async Task CloseModal()
+    {
+        await OnClose.InvokeAsync();
+    }
+
+    public async Task AddReview()
+    {
+        var response = await TourMapService.AddOrUpdateTourMapReview(newReview);
+
+        if (response.Success)
+        {
+            await OnSave.InvokeAsync();
+            await CloseModal();
+        }
+    }
+}
