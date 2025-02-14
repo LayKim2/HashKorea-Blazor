@@ -17,6 +17,7 @@ public interface ITourMapService
 
 
     #region review
+    Task<ServiceResponse<GetTourMapReviewResponseDto>> GetTourMapReview(int reviewId);
     Task<ServiceResponse<List<GetTourMapReviewResponseDto>>> GetTourMapReviews(int tourMapId);
     Task<ServiceResponse<int>> AddOrUpdateTourMapReview(TourMapReviewRequestDto request);
     Task<ServiceResponse<bool>> DeleteTourMapReview(int reviewId);

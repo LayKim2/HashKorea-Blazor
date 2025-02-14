@@ -8,6 +8,8 @@
 @inject IJSRuntime JSRuntime
 @inject ITourMapService TourMapService
 
+@inject Radzen.DialogService RadZenDialogService
+
 <RadzenCard Class="p-4">
     <RadzenRow>
         <!-- Left Panel -->
@@ -100,6 +102,14 @@
                                     </div>
                                 </div>
                                 <p class="mt-2">@review.Comment</p>
+
+                                @if (review.IsOwner)
+                                {
+                                    <div class="d-flex justify-content-end mt-2">
+                                        <MudButton Color="Color.Primary" OnClick="() => EditReview(review.Id)">Edit</MudButton>
+                                        <MudButton Color="Color.Error" OnClick="() => DeleteReview(review.Id)">Delete</MudButton>
+                                    </div>
+                                }
                             </div>
                         }
                     </div>
@@ -234,7 +244,8 @@
 
     private GetTourMapsResponseDto tourMaps = new GetTourMapsResponseDto();
 
-    private async Task GetTourMapDetail() {
+    private async Task GetTourMapDetail()
+    {
 
         var response = await TourMapService.GetTourMapDetail(Id);
         if (response.Success && response.Data != null)
@@ -303,6 +314,19 @@
     private async Task HandleSavePin()
     {
         await GetTourMapDetail();
+    }
+
+    async Task EditReview(int reviewId) {
+        await OpenModal();
+    }
+
+    async Task DeleteReview(int reviewId)
+    {
+        var dialogResult = await RadZenDialogService.Confirm("Are you sure to delete? ", "Delete Review", new Radzen.ConfirmOptions() { OkButtonText = "Yes", CancelButtonText = "No" });
+
+        if (dialogResult != null && dialogResult.Value) {
+            await TourMapService.DeleteTourMapReview(reviewId);
+        }
     }
 
     #endregion

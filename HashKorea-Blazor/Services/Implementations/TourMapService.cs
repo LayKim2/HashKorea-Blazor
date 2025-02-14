@@ -283,6 +283,42 @@ public class TourMapService : ITourMapService
 
 
     #region review
+    public async Task<ServiceResponse<GetTourMapReviewResponseDto>> GetTourMapReview(int reviewId)
+    {
+        var response = new ServiceResponse<GetTourMapReviewResponseDto>();
+
+        try
+        {
+            var currentUserId = await GetUserId();
+            var reviews = await _context.TourMapReviews
+                .Where(r => r.Id == reviewId)
+                .Select(r => new GetTourMapReviewResponseDto
+                {
+                    Id = r.Id,
+                    UserName = r.User.Name,
+                    Initial = r.User.Name.Substring(0, 1),
+                    TourMapId = r.TourMapId,
+                    Comment = r.Comment,
+                    Rating = r.Rating,
+                    IsOwner = r.UserId == currentUserId,
+                    CreatedDate = r.CreatedDate
+                })
+                .FirstOrDefaultAsync();
+
+            response.Success = true;
+            response.Data = reviews;
+        }
+        catch (Exception ex)
+        {
+            response.Success = false;
+            response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
+            response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
+            _logService.LogError("EXCEPTION: GetTourMapReview", ex.Message, "Fetching reviews");
+        }
+
+        return response;
+    }
+
     public async Task<ServiceResponse<List<GetTourMapReviewResponseDto>>> GetTourMapReviews(int tourMapId)
     {
         var response = new ServiceResponse<List<GetTourMapReviewResponseDto>>();

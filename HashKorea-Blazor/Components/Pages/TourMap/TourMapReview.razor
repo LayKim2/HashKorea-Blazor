@@ -4,9 +4,11 @@
 
 @using HashKorea.DTOs.TourMap
 @using Microsoft.AspNetCore.Authorization
+@using System.ComponentModel.DataAnnotations
 @inject ITourMapService TourMapService
+@inject ISnackbar Snackbar
 
-<EditForm Model="@newReview" OnValidSubmit="AddReview">
+<RadzenTemplateForm TItem="TourMapReviewRequestDto" Data="@newReview" Submit="AddReview">
     <DataAnnotationsValidator />
 
     <div class="card p-3">
@@ -26,26 +28,27 @@
             <div class="text-danger">
                 <ValidationMessage For="@(() => newReview.Rating)" />
             </div>
+
         </div>
 
         <div class="mb-3">
             <InputTextArea @bind-Value="newReview.Comment"
             class="form-control border-light"
             placeholder="Share details of your own experience at this place"
-            rows="4" />
+            rows="4"/>
             <div class="text-danger mt-1">
                 <ValidationMessage For="@(() => newReview.Comment)" />
             </div>
         </div>
 
         <div>
-            <button type="button" class="btn btn-outline-primary w-100 text-start">
+            <button type="button" class="btn btn-outline-primary w-100 text-start" disabled>
                 <i class="fas fa-camera me-2"></i>
                 Add photos & videos
             </button>
         </div>
     </div>
-</EditForm>
+</RadzenTemplateForm>
 
 @code {
     [Parameter] public int TourMapId { get; set; }
@@ -83,14 +86,30 @@
 
     public async Task AddReview()
     {
-        var response = await TourMapService.AddOrUpdateTourMapReview(newReview);
+        var validationResults = new List<ValidationResult>();
+        var validationContext = new ValidationContext(newReview);
+        bool isValid = Validator.TryValidateObject(newReview, validationContext, validationResults, true);
 
-        if (response.Success)
+        if (isValid)
         {
-            newReview = new();
+            var response = await TourMapService.AddOrUpdateTourMapReview(newReview);
 
-            await OnSave.InvokeAsync();
-            await CloseModal();
+            if (response.Success)
+            {
+                newReview = new();
+
+                await OnSave.InvokeAsync();
+                await CloseModal();
+            }
+        }
+        else
+        {
+            Snackbar.Clear();
+            Snackbar.Configuration.PositionClass = Defaults.Classes.Position.BottomCenter;
+            foreach (var validationResult in validationResults)
+            {
+                Snackbar.Add(validationResult.ErrorMessage, Severity.Error);
+            }
         }
     }
 }

@@ -39,7 +39,7 @@ public class TourMapReviewRequestDto
     public int UserId { get; set; }
     [Required(ErrorMessage = "Please select a rating")]
     [Range(1, 5, ErrorMessage = "Please rate your experience")]
-    public int Rating { get; set; } = 0;
+    public double Rating { get; set; } = 5.0;
 
     [Required(ErrorMessage = "Please share your experience")]
     [MinLength(10, ErrorMessage = "Review must be at least 10 characters long")]
