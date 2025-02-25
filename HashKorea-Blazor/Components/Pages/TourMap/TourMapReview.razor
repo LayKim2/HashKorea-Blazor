@@ -52,16 +52,37 @@
 
 @code {
     [Parameter] public int TourMapId { get; set; }
+    [Parameter] public int? ReviewId { get; set; }
     [Parameter] public EventCallback OnClose { get; set; }
     [Parameter] public EventCallback OnSave { get; set; }
 
     private TourMapReviewRequestDto newReview = new();
 
+    private int currentReviewId = 0;
     private int hoverRating = 0;
 
-    protected override void OnInitialized()
-    {
-        newReview.TourMapId = TourMapId;
+    protected override async Task OnParametersSetAsync() {
+        if (ReviewId.HasValue && currentReviewId != ReviewId.Value)
+        {
+            var response = await TourMapService.GetTourMapReview(ReviewId.Value);
+
+            if (response.Success && response.Data != null)
+            {
+                newReview = new TourMapReviewRequestDto()
+                    {
+                        ReviewId = response.Data.Id,
+                        TourMapId = response.Data.TourMapId,
+                        Comment = response.Data.Comment,
+                        Rating = response.Data.Rating
+                    };
+
+                currentReviewId = response.Data.Id;
+            }
+        }
+        else
+        {
+            newReview.TourMapId = TourMapId;
+        }
     }
 
     private void SetRating(int rating)

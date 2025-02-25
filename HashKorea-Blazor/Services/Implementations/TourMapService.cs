@@ -474,11 +474,13 @@ public class TourMapService : ITourMapService
                 return response;
             }
 
+            var tourMapId = review.TourMapId;
             _context.TourMapReviews.Remove(review);
+            await _context.SaveChangesAsync();
 
             var tourMap = await _context.TourMaps
                 .Include(t => t.TourMapReviews)
-                .FirstOrDefaultAsync(t => t.Id == review.TourMapId);
+                .FirstOrDefaultAsync(t => t.Id == tourMapId);
 
             if (tourMap == null)
             {

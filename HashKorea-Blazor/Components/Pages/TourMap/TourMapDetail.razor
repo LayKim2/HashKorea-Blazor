@@ -225,16 +225,20 @@
 </RadzenCard>
 
 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-    <Modal Title="Review" IsVisible="isModalVisible" OnClose="CloseModal">
-        <ChildContent>
-            <TourMapReview @ref="TourMapReviewInstance" TourMapId="@Id" OnClose="CloseModal" OnSave="HandleSavePin" />
-        </ChildContent>
-        <FooterContent>
-            <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="() => TourMapReviewInstance.AddReview()">
-                Review
-            </MudButton>
-        </FooterContent>
-    </Modal>
+
+    @if (isModalVisible) {
+        <Modal Title="Review" IsVisible="isModalVisible" OnClose="CloseModal">
+            <ChildContent>
+                <TourMapReview @ref="TourMapReviewInstance" TourMapId="@Id" ReviewId="@editReviewId" OnClose="CloseModal" OnSave="HandleSavePin" />
+            </ChildContent>
+            <FooterContent>
+                <MudButton Variant="MudBlazor.Variant.Filled" Color="Color.Primary" Size="Size.Large" @onclick="() => TourMapReviewInstance.AddReview()">
+                    Review
+                </MudButton>
+            </FooterContent>
+        </Modal>
+    }
+
 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
 @code {
@@ -294,6 +298,7 @@
 
     private bool isModalVisible = false;
     private bool shouldInitializeMap = true;
+    private int? editReviewId = null;
 
     private async Task OpenModal()
     {
@@ -317,6 +322,8 @@
     }
 
     async Task EditReview(int reviewId) {
+
+        editReviewId = reviewId;
         await OpenModal();
     }
 
@@ -326,6 +333,7 @@
 
         if (dialogResult != null && dialogResult.Value) {
             await TourMapService.DeleteTourMapReview(reviewId);
+            await GetTourMapDetail();
         }
     }
 
