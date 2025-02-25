@@ -3,7 +3,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace HashKorea.Models;
 
-public class TourMapReview
+public class TourMapReviewImage
 {
     [Key]
     [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
@@ -13,14 +13,15 @@ public class TourMapReview
     [Required]
     public int UserId { get; set; }
     [Required]
-    public string Comment { get; set; } = string.Empty;
-    [Required]
-    public double Rating { get; set; }
+    public int ReviewId { get; set; }
+    public string MainImagePublicUrl { get; set; } = string.Empty;
+    public string MainImageStoragePath { get; set; } = string.Empty;
     public DateTime CreatedDate { get; set; } = DateTime.Now;
     public DateTime UpdatedDate { get; set; } = DateTime.Now;
 
     [ForeignKey("UserId")]
     public virtual User User { get; set; }
+    [ForeignKey("ReviewId")]
+    public virtual TourMapReview TourMapReview { get; set; }
 
-    public virtual ICollection<TourMapReviewImage> TourMapReviewImages { get; set; } = new HashSet<TourMapReviewImage>();
 }

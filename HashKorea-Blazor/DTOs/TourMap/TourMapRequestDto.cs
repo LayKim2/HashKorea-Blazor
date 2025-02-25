@@ -44,4 +44,13 @@ public class TourMapReviewRequestDto
     [Required(ErrorMessage = "Please share your experience")]
     [MinLength(10, ErrorMessage = "Review must be at least 10 characters long")]
     public string Comment { get; set; } = string.Empty;
+
+    public List<string> ImageUrlList { get; set; } = new List<string>();
+    public List<MultipartFile> ImageUrlFileList { get; set; } = new List<MultipartFile>();
 }
+
+//public class UploadFileList()
+//{
+
+//    MultipartFile file { get; set; } = new MultipartFile();
+//}

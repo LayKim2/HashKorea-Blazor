@@ -74,7 +74,7 @@
                         </div>
                     </div>
                     <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-                        <MudButton OnClick="OpenModal">Write a Review</MudButton>
+                        <MudButton OnClick="AddReview">Write a Review</MudButton>
                     </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
                     <div class="list-group">
@@ -101,6 +101,14 @@
                                         </div>
                                     </div>
                                 </div>
+
+                                <div class="mt-2 d-flex overflow-auto">
+                                    @foreach (var image in review.Images)
+                                    {
+                                        <img src="@image" alt="Review Image" class="rounded me-2" style="max-width: 100px; height: 56px; object-fit: cover;" />
+                                    }
+                                </div>
+
                                 <p class="mt-2">@review.Comment</p>
 
                                 @if (review.IsOwner)
@@ -183,7 +191,7 @@
                     </div>
                 </div>
                 <Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
-                    <MudButton OnClick="OpenModal">Write a Review</MudButton>
+                    <MudButton OnClick="AddReview">Write a Review</MudButton>
                 </Microsoft.AspNetCore.Components.Authorization.AuthorizeView>
 
                 <div class="list-group">
@@ -297,14 +305,10 @@
     private TourMapReview TourMapReviewInstance { get; set; } // for modal
 
     private bool isModalVisible = false;
-    private bool shouldInitializeMap = true;
     private int? editReviewId = null;
 
     private async Task OpenModal()
     {
-        isModalVisible = true;
-        shouldInitializeMap = true;
-
         // Prevent body from scrolling when modal is open
         await JSRuntime.InvokeVoidAsync("addBodyClass", "modal-open");
     }
@@ -312,7 +316,6 @@
     private async Task CloseModal()
     {
         isModalVisible = false;
-        shouldInitializeMap = false;
         await JSRuntime.InvokeVoidAsync("removeBodyClass", "modal-open");
     }
 
@@ -321,8 +324,14 @@
         await GetTourMapDetail();
     }
 
-    async Task EditReview(int reviewId) {
+    async Task AddReview() {
+        isModalVisible = true;
+        editReviewId = null;
+        await OpenModal();
+    }
 
+    async Task EditReview(int reviewId) {
+        isModalVisible = true;
         editReviewId = reviewId;
         await OpenModal();
     }

@@ -1,5 +1,6 @@
 ﻿using HashKorea.Common.Constants;
 using HashKorea.Data;
+using HashKorea.DTOs.Shared;
 using HashKorea.DTOs.TourMap;
 using HashKorea.Models;
 using HashKorea.Responses;
@@ -17,6 +18,7 @@ public class TourMapService : ITourMapService
     private readonly AuthenticationStateProvider _authStateProvider;
     private readonly IFileService _fileService;
 
+    private static SemaphoreSlim _semaphore = new SemaphoreSlim(1, 1);
     public TourMapService(DataContext context, ILogService logService, AuthenticationStateProvider authStateProvider, IFileService fileService)
     {
         _context = context;
@@ -289,6 +291,10 @@ public class TourMapService : ITourMapService
 
         try
         {
+            // popup열때 호출하는데, parameter가 2번 넘어가면서 이 API도 동시에 2번호출되는데, 거기에서 서로 꼬여서 에러남
+            // TO DO: parameter set에서 한번만 호출되게 처리해야됨.
+            await _semaphore.WaitAsync(); // lock only 1
+
             var currentUserId = await GetUserId();
             var reviews = await _context.TourMapReviews
                 .Where(r => r.Id == reviewId)
@@ -300,8 +306,9 @@ public class TourMapService : ITourMapService
                     TourMapId = r.TourMapId,
                     Comment = r.Comment,
                     Rating = r.Rating,
-                    IsOwner = r.UserId == currentUserId,
-                    CreatedDate = r.CreatedDate
+                    IsOwner = r.UserId == currentUserId ? true : false,
+                    CreatedDate = r.CreatedDate,
+                    Images = r.TourMapReviewImages.Select(i => i.MainImagePublicUrl).ToList()
                 })
                 .FirstOrDefaultAsync();
 
@@ -314,6 +321,10 @@ public class TourMapService : ITourMapService
             response.Code = MessageCode.Custom.UNKNOWN_ERROR.ToString();
             response.Message = MessageCode.CustomMessages[MessageCode.Custom.UNKNOWN_ERROR];
             _logService.LogError("EXCEPTION: GetTourMapReview", ex.Message, "Fetching reviews");
+        }
+        finally
+        {
+            _semaphore.Release();
         }
 
         return response;
@@ -339,7 +350,8 @@ public class TourMapService : ITourMapService
                     Comment = r.Comment,
                     Rating = r.Rating,
                     IsOwner = r.UserId == currentUserId,
-                    CreatedDate = r.CreatedDate
+                    CreatedDate = r.CreatedDate,
+                    Images = r.TourMapReviewImages.Select(i => i.MainImagePublicUrl).ToList()
                 })
                 .ToListAsync();
 
@@ -378,6 +390,7 @@ public class TourMapService : ITourMapService
 
             TourMapReview review;
 
+            // 1. update
             if (request.ReviewId.HasValue)
             {
                 review = await _context.TourMapReviews
@@ -389,6 +402,18 @@ public class TourMapService : ITourMapService
                     response.Code = MessageCode.Custom.NOT_FOUND_DATA.ToString();
                     response.Message = MessageCode.CustomMessages[MessageCode.Custom.NOT_FOUND_DATA];
                     return response;
+                }
+
+                if (request.ImageUrlFileList.Any())
+                {
+                    await SaveReviewImages(request.ImageUrlFileList, userId, request.TourMapId, request.ReviewId.Value);
+                } else
+                {
+                    var existingImages = _context.TourMapReviewImages.Where(img => img.ReviewId == request.ReviewId.Value).ToList();
+                    if (existingImages.Any())
+                    {
+                        _context.TourMapReviewImages.RemoveRange(existingImages);
+                    }
                 }
 
                 review.TourMapId = request.TourMapId;
@@ -408,6 +433,13 @@ public class TourMapService : ITourMapService
                 };
 
                 _context.TourMapReviews.Add(review);
+
+                await _context.SaveChangesAsync();
+
+                if (request.ImageUrlFileList.Any())
+                {
+                    await SaveReviewImages(request.ImageUrlFileList, userId, request.TourMapId, review.Id);
+                }
             }
 
             await _context.SaveChangesAsync();
@@ -452,6 +484,76 @@ public class TourMapService : ITourMapService
         }
 
         return response;
+    }
+
+    private async Task<ServiceResponse<int>> SaveReviewImages(List<MultipartFile> files, int userId, int tourMapId, int reviewId)
+    {
+        try
+        {
+            List<TourMapReviewImage> reviewImages = new List<TourMapReviewImage>();
+
+            foreach (var file in files)
+            {
+                if (file != null && file.Content.Length > 0)
+                {
+                    var folderPath = $"content/review/{tourMapId}/{reviewId}"; 
+
+                    var uploadResult = await _fileService.UploadFile(file, folderPath);
+
+                    if (uploadResult.Success)
+                    {
+                        var reviewImage = new TourMapReviewImage
+                        {
+                            TourMapId = tourMapId,
+                            UserId = userId,
+                            ReviewId = reviewId,
+                            MainImageStoragePath = uploadResult.Data.S3Path,
+                            MainImagePublicUrl = uploadResult.Data.CloudFrontUrl,
+                            CreatedDate = DateTime.Now,
+                            UpdatedDate = DateTime.Now
+                        };
+
+                        reviewImages.Add(reviewImage);
+                    }
+                    else
+                    {
+                        return new ServiceResponse<int>
+                        {
+                            Success = false,
+                            Code = uploadResult.Code,
+                            Message = uploadResult.Message
+                        };
+                    }
+                }
+            }
+
+            var existingImages = _context.TourMapReviewImages.Where(img => img.ReviewId == reviewId).ToList();
+            if (existingImages.Any())
+            {
+                _context.TourMapReviewImages.RemoveRange(existingImages);
+            }
+
+            if (reviewImages.Any())
+            {
+                _context.TourMapReviewImages.AddRange(reviewImages);
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new ServiceResponse<int>
+            {
+                Success = true,
+                Data = reviewImages.Count
+            };
+        }
+        catch (Exception ex)
+        {
+            return new ServiceResponse<int>
+            {
+                Success = false,
+                Message = "An error occurred while saving images: " + ex.Message
+            };
+        }
     }
 
 

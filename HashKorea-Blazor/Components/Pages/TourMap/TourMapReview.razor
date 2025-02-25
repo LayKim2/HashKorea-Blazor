@@ -2,11 +2,13 @@
 
 @rendermode InteractiveServer
 
+@using HashKorea.DTOs.Shared
 @using HashKorea.DTOs.TourMap
 @using Microsoft.AspNetCore.Authorization
 @using System.ComponentModel.DataAnnotations
 @inject ITourMapService TourMapService
 @inject ISnackbar Snackbar
+@inject IJSRuntime JSRuntime
 
 <RadzenTemplateForm TItem="TourMapReviewRequestDto" Data="@newReview" Submit="AddReview">
     <DataAnnotationsValidator />
@@ -42,10 +44,38 @@
         </div>
 
         <div>
-            <button type="button" class="btn btn-outline-primary w-100 text-start" disabled>
-                <i class="fas fa-camera me-2"></i>
+            <MudButton HtmlTag="label"
+            Color="Color.Primary"
+            Variant="MudBlazor.Variant.Outlined"
+            StartIcon="@Icons.Material.Filled.CloudUpload"
+            for="fileInput">
                 Add photos & videos
-            </button>
+                <InputFile id="fileInput"
+                OnChange="OnImagesSelected"
+                Accept="image/*"
+                multiple
+                hidden />
+            </MudButton>
+            <div class="mt-2">
+                @if (newReview.ImageUrlList != null && newReview.ImageUrlList.Any())
+                {
+                    <div class="d-flex flex-row overflow-auto gap-2" style="max-width: 100%; max-height: 200px;">
+                        @foreach (var imageUrl in newReview.ImageUrlList)
+                        {
+                            <div class="d-flex flex-column align-items-center gap-2">
+                                <img src="@imageUrl"
+                                alt="Preview"
+                                style="width: 150px; height: 84px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;" />
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                Color="Color.Error"
+                                Size="Size.Small"
+                                OnClick="() => RemoveImage(imageUrl)" />
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+
         </div>
     </div>
 </RadzenTemplateForm>
@@ -58,11 +88,12 @@
 
     private TourMapReviewRequestDto newReview = new();
 
-    private int currentReviewId = 0;
     private int hoverRating = 0;
+    private int currentReivewId = 0;
 
     protected override async Task OnParametersSetAsync() {
-        if (ReviewId.HasValue && currentReviewId != ReviewId.Value)
+
+        if (ReviewId.HasValue && currentReivewId != ReviewId.Value)
         {
             var response = await TourMapService.GetTourMapReview(ReviewId.Value);
 
@@ -73,10 +104,11 @@
                         ReviewId = response.Data.Id,
                         TourMapId = response.Data.TourMapId,
                         Comment = response.Data.Comment,
-                        Rating = response.Data.Rating
+                        Rating = response.Data.Rating,
+                        ImageUrlList = response.Data.Images
                     };
 
-                currentReviewId = response.Data.Id;
+                currentReivewId = response.Data.Id;
             }
         }
         else
@@ -113,6 +145,8 @@
 
         if (isValid)
         {
+            await SetImageFiles();
+
             var response = await TourMapService.AddOrUpdateTourMapReview(newReview);
 
             if (response.Success)
@@ -133,4 +167,72 @@
             }
         }
     }
+
+    private async Task OnImagesSelected(InputFileChangeEventArgs e)
+    {
+        var imageUrls = new List<string>();
+
+        foreach (var file in e.GetMultipleFiles())
+        {
+            var buffer = await ResizeImage(file);
+            var imageUrl = await JSRuntime.InvokeAsync<string>("createBlobUrlFromBuffer", buffer, "image/jpeg");
+            imageUrls.Add(imageUrl);
+        }
+
+        newReview.ImageUrlList.AddRange(imageUrls);
+
+    }
+
+    private async Task<byte[]> ResizeImage(IBrowserFile file)
+    {
+        var resizedImage = await file.RequestImageFileAsync(
+            "image/jpeg",
+            400,
+            225   // 16:9
+        );
+
+        using var stream = resizedImage.OpenReadStream();
+        var buffer = new byte[resizedImage.Size];
+        await stream.ReadAsync(buffer);
+        return buffer;
+    }
+
+    private void RemoveImage(string imageUrl)
+    {
+        newReview.ImageUrlList.Remove(imageUrl);
+    }
+
+    private async Task SetImageFiles()
+    {
+        try
+        {
+            if (newReview.ImageUrlList == null || !newReview.ImageUrlList.Any())
+            {
+                newReview.ImageUrlFileList = new List<MultipartFile>();
+            }
+
+            foreach (var imageUrl in newReview.ImageUrlList)
+            {
+                if (imageUrl.Contains("blob"))
+                {
+                    var blob = await JSRuntime.InvokeAsync<byte[]>("fetchBlobData", imageUrl);
+                    string fileName = $"reviewImage_{DateTime.Now:yyyyMMddHHmmss}.jpg";
+
+                    var multipartFile = new MultipartFile
+                        {
+                            FileName = fileName,
+                            ContentType = "image/jpeg",
+                            Content = blob
+                        };
+
+                    newReview.ImageUrlFileList.Add(multipartFile);
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            newReview.ImageUrlFileList = new List<MultipartFile>();
+        }
+    }
+
 }

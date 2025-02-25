@@ -28,6 +28,7 @@ public class DataContext : DbContext
     public DbSet<TourMap> TourMaps { get; set; }
     public DbSet<TourMapComment> TourMapComments { get; set; }
     public DbSet<TourMapReview> TourMapReviews { get; set; }
+    public DbSet<TourMapReviewImage> TourMapReviewImages { get; set; }
     #endregion
 
     public DbSet<CommonCode> CommonCodes { get; set; }

@@ -16,4 +16,6 @@ public class GetTourMapReviewResponseDto
     public double Rating { get; set; } = 0;
     public DateTime CreatedDate { get; set; }
     public string CreatedDateRelative => CreatedDate.ToRelativeTimeString();
+
+    public List<string> Images { get; set; } = new List<string>();
 }
